@@ -4,7 +4,7 @@ services:
   app:
     container_name: app
     build:
-      context: .
+      context: ..
       args:
         LOCAL: "true"
     ports:
@@ -17,7 +17,7 @@ services:
       - enrollment
 
   db:
-    container_name: db
+    container_name: postgres
     image: postgres:15.2-alpine
     environment:
       - POSTGRES_PASSWORD=password
