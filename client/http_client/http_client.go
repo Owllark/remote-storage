@@ -1,54 +1,44 @@
 package http_client
 
 import (
-	"log"
+	"bytes"
 	"net/http"
-	"time"
 )
 
-type Client interface {
-	Listen()
-	AddHandler()
+/*type Client interface {
+	Get()
+	Put()
+	Post()
+	Delete()
+}*/
+
+type HttpClient struct {
+	client     http.Client
+	serviceUrl string
 }
 
-func NewHttpRouter() *HttpRouter {
-	h := tServerHandler{
-		mux: make(map[string]func(http.ResponseWriter, *http.Request)),
+func NewHttpClient(url string) *HttpClient {
+	client := http.Client{
+		Transport:     nil,
+		CheckRedirect: nil,
+		Jar:           nil,
+		Timeout:       0,
 	}
-	r := HttpRouter{
-		serverHandler: h,
-	}
-	return &r
+	res := HttpClient{client: client, serviceUrl: url}
+	return &res
 }
 
-type tServerHandler struct {
-	mux map[string]func(http.ResponseWriter, *http.Request)
+func (c *HttpClient) Get(api string) *http.Response {
+	resp, _ := http.Get(c.serviceUrl + api)
+	return resp
 }
 
-func (h *tServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if handlerFunc, ok := h.mux[r.URL.String()]; ok {
-		handlerFunc(w, r)
-		return
-	}
+func (c *HttpClient) Post(api string, contentType string, body []byte) *http.Response {
+	resp, _ := http.Post(c.serviceUrl+api, contentType, bytes.NewReader(body))
+	return resp
 }
 
-type HttpRouter struct {
-	server        http.Server
-	serverHandler tServerHandler
-}
-
-func (r *HttpRouter) Listen() {
-	r.server = http.Server{
-		Addr:        ":8080",
-		Handler:     &r.serverHandler,
-		ReadTimeout: 5 * time.Second,
-	}
-	err := r.server.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (r *HttpRouter) AddHandler(url string, f func(http.ResponseWriter, *http.Request)) {
-	r.serverHandler.mux[url] = f
+func (c *HttpClient) DoRequest(request *http.Request) *http.Response {
+	resp, _ := c.client.Do(request)
+	return resp
 }

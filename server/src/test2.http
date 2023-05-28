@@ -6,26 +6,21 @@ Content-Type: application/json
 }
 
 ###
-
 POST http://localhost:8080/mkdir
 Content-Type: application/json
 
 {
   "path": "",
-  "dirname": "wearegonnabevictorious.txt"
+  "dir_name": "diggydiggyhole"
 }
 
 ###
-
-POST http://localhost:8080/copy
+POST http://localhost:8080/ls
 Content-Type: application/json
 
 {
-  "src_dir_path": "",
-  "file_name": "test_dir",
-  "dest_dir_path": "wearegonnabevictorious"
+  "path": ""
 }
 
 ###
-
 

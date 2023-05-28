@@ -16,6 +16,6 @@ RUN go build -o storage-server
 EXPOSE 8080
 
 # Set the command to run your application by default
-CMD ["--memory=2g", "./storage-server"]
+CMD ["./storage-server"]
 
 

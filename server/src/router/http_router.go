@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type HttpRouter struct {
+	server        http.Server
+	serverHandler tServerHandler
+}
+
 func NewHttpRouter() *HttpRouter {
 	h := tServerHandler{
 		mux: make(map[string]func(http.ResponseWriter, *http.Request)),
@@ -25,11 +30,6 @@ func (h *tServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handlerFunc(w, r)
 		return
 	}
-}
-
-type HttpRouter struct {
-	server        http.Server
-	serverHandler tServerHandler
 }
 
 func (r *HttpRouter) Listen() {
