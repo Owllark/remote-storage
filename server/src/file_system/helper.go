@@ -31,17 +31,23 @@ func splitPath(path string) []string {
 func (fs *FileSystem) isExists(path string) bool {
 	path = fs.getPath(path)
 	_, err := os.Stat(path)
-	return !os.IsExist(err)
+	return !os.IsNotExist(err)
 }
 
 func (fs *FileSystem) isDirectoryExists(path string) bool {
 	path = fs.getPath(path)
 	info, err := os.Stat(path)
-	return !os.IsExist(err) && info.IsDir()
+	if os.IsNotExist(err) {
+		return false // Directory does not exist
+	}
+	return info.IsDir()
 }
 
 func (fs *FileSystem) isFileExists(path string) bool {
 	path = fs.getPath(path)
 	info, err := os.Stat(path)
-	return !os.IsExist(err) && !info.IsDir()
+	if os.IsNotExist(err) {
+		return false // File does not exist
+	}
+	return !info.IsDir()
 }

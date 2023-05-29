@@ -17,9 +17,6 @@ func (fs *FileSystem) Cd(path string) (string, error) {
 	switch path {
 	case "..":
 		{
-			if len(fs.currentPath) == 0 {
-				err = errors.New("cd cannot move one level above, already in root directory")
-			}
 			fs.prevPaths = append(fs.prevPaths, joinPath(fs.currentPath))
 			fs.currentPath = fs.currentPath[:len(fs.currentPath)-1]
 			fs.currentDir = joinPath(fs.currentPath)
@@ -65,62 +62,95 @@ func (fs *FileSystem) MkDir(path string, dir string) (string, error) {
 	var newDirPath string
 	newDirPath = path + dir
 
-	if !fs.isDirectoryExists(path) {
-		err = errors.New("cannot create directory, invalid path")
-	} else {
-		err = fs.Mkdir(newDirPath, 0644)
+	err = fs.Mkdir(newDirPath, 0644)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+			err = errors.New(fmt.Sprintf("invalid path"))
+		case os.IsExist(err):
+			err = errors.New(fmt.Sprintf("directory #{newDirPath} already exist"))
+		default:
+			err = errors.New(fmt.Sprintf("error creating directory"))
+		}
 	}
+
 	return newDirPath, err
 }
 
 func (fs *FileSystem) RenameCmd(dirPath, oldName, newName string) (string, error) {
 	var err error
-	var oldFilePath = dirPath + string(os.PathSeparator) + oldName
-	var newFilePath = dirPath + string(os.PathSeparator) + newName
+	var oldFilePath = dirPath + oldName
+	var newFilePath = dirPath + newName
 
-	if !fs.isExists(oldFilePath) {
-		err = errors.New("cannot rename file, file not found")
-	} else {
-		err = fs.Rename(oldFilePath, newFilePath)
+	err = fs.Rename(oldFilePath, newFilePath)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+			err = errors.New(fmt.Sprintf("#{oldFilePath} not found"))
+		case os.IsExist(err):
+			err = errors.New(fmt.Sprintf("#{newFilePath} already exist"))
+		default:
+			err = errors.New(fmt.Sprintf("error renaming file"))
+		}
 	}
+
 	return newFilePath, err
 }
 
 func (fs *FileSystem) MoveCmd(srcDirPath, fileName, destDirPath string) (string, error) {
 	var err error
-	var oldFilePath = srcDirPath + string(os.PathSeparator) + fileName
-	var newFilePath = destDirPath + string(os.PathSeparator) + fileName
+	var oldFilePath = srcDirPath + fileName
+	var newFilePath = destDirPath + fileName
 
-	if !fs.isExists(oldFilePath) {
-		err = errors.New("cannot move file, file not found")
-	} else {
-		err = fs.Move(oldFilePath, newFilePath)
+	err = fs.Move(oldFilePath, newFilePath)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+			err = errors.New(fmt.Sprintf("#{oldFilePath} not found"))
+		case os.IsExist(err):
+			err = errors.New(fmt.Sprintf("#{newFilePath} already exist"))
+		default:
+			err = errors.New(fmt.Sprintf("error moving file"))
+		}
 	}
+
 	return newFilePath, err
 }
 
 func (fs *FileSystem) DeleteCmd(dirPath, fileName string) (string, error) {
 	var err error
-	var filePath = dirPath + string(os.PathSeparator) + fileName
+	var filePath = dirPath + fileName
 
-	if !fs.isExists(filePath) {
-		err = errors.New("cannot delete file, file not found")
-	} else {
-		err = fs.Delete(filePath)
+	err = fs.Delete(filePath)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+			err = errors.New(fmt.Sprintf("#{filePath} not found"))
+		default:
+			err = errors.New(fmt.Sprintf("error deleting file"))
+		}
 	}
+
 	return filePath, err
 }
 
 func (fs *FileSystem) CopyCmd(srcDirPath, fileName, destDirPath string) (string, error) {
 	var err error
-	var oldFilePath = srcDirPath + string(os.PathSeparator) + fileName
-	var newFilePath = destDirPath + string(os.PathSeparator) + fileName
+	var oldFilePath = srcDirPath + fileName
+	var newFilePath = destDirPath + fileName
 
-	if !fs.isExists(oldFilePath) {
-		err = errors.New("cannot copy file, file not found")
-	} else {
-		err = fs.Copy(oldFilePath, newFilePath)
+	err = fs.Copy(oldFilePath, newFilePath)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+			err = errors.New(fmt.Sprintf("#{oldFilePath} not found"))
+		case os.IsExist(err):
+			err = errors.New(fmt.Sprintf("#{newFilePath} already exist"))
+		default:
+			err = errors.New(fmt.Sprintf("error copying file"))
+		}
 	}
+
 	return newFilePath, err
 }
 
@@ -128,6 +158,14 @@ func (fs *FileSystem) Ls(dirPath string) ([]string, error) {
 	var fileNames []string
 	files, err := os.ReadDir(fs.getPath(dirPath))
 	if err != nil {
+		if err != nil {
+			switch {
+			case os.IsNotExist(err):
+				err = errors.New(fmt.Sprintf("#{oldFilePath} not found"))
+			default:
+				err = errors.New(fmt.Sprintf("error listing files of directory"))
+			}
+		}
 		return fileNames, err
 	}
 	for _, file := range files {

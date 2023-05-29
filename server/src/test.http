@@ -2,7 +2,7 @@ POST http://localhost:8080/cd
 Content-Type: application/json
 
 {
-  "path": "test_dir"
+  "path": "new"
 }
 
 ###

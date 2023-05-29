@@ -1,16 +1,16 @@
 package schemas
 
-// all paths must be without separator in the end
+// all paths must be with separator in the end
 
 type CdResponse struct {
-	// path to directory without separator at the end
+	// path to directory
 	Path string `json:"path,omitempty"`
 	// message if something went wrong
 	Message string `json:"message,omitempty"`
 }
 
 type MkDirResponse struct {
-	// path to created directory without separator at the end
+	// path to created directory
 	Path string `json:"path,omitempty"`
 	// message if something went wrong
 	Message string `json:"message,omitempty"`

@@ -32,7 +32,7 @@ func main() {
 	var isOver = false
 	state.curPath = ""
 	for !isOver {
-		fmt.Println("ENTER YOUR REQUEST")
+		fmt.Print(fmt.Sprintf("%s>", state.curPath))
 		var req string
 		req, _ = reader.ReadString('\n')
 		req = req[0 : len(req)-2]
@@ -52,7 +52,6 @@ func main() {
 					fmt.Println(err)
 					continue
 				}
-				//location, dirname = "", "hi"
 				request, err := CreateMkDirRequest(location, dirname)
 				if err != nil {
 					fmt.Println(err)
@@ -79,7 +78,24 @@ func main() {
 					fmt.Println("Too much arguments")
 					continue
 				}
-
+				location := arguments[1]
+				request, err := CreateCdRequest(location)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				response := client.DoRequest(request)
+				if response.StatusCode != 200 {
+					fmt.Println("Server error occurred")
+					continue
+				}
+				body, _ := io.ReadAll(response.Body)
+				var responseInf schemas.CdResponse
+				json.Unmarshal(body, &responseInf)
+				state.curPath = responseInf.Path
+				if responseInf.Message != "" {
+					fmt.Println(responseInf.Message)
+				}
 			}
 		case "ls":
 			{
@@ -90,6 +106,28 @@ func main() {
 					fmt.Println("Too much arguments")
 					continue
 				}
+				location := arguments[1]
+				request, err := CreateLsRequest(location)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				response := client.DoRequest(request)
+				if response.StatusCode != 200 {
+					fmt.Println("Server error occurred")
+					continue
+				}
+				body, _ := io.ReadAll(response.Body)
+				var responseInf schemas.LsResponse
+				json.Unmarshal(body, &responseInf)
+				if responseInf.Message != "" {
+					fmt.Println(responseInf.Message)
+				}
+				output := responseInf.CommandOutput
+				for _, s := range output {
+					fmt.Println(s)
+				}
+
 			}
 		case "rename":
 			{
@@ -99,6 +137,28 @@ func main() {
 				} else if len(arguments) > 3 {
 					fmt.Println("Too much arguments")
 					continue
+				}
+				location, oldName, err := getLocationAndFileName(arguments[1])
+				newName := arguments[2]
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				request, err := CreateRenameRequest(location, oldName, newName)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				response := client.DoRequest(request)
+				if response.StatusCode != 200 {
+					fmt.Println("Server error occurred")
+					continue
+				}
+				body, _ := io.ReadAll(response.Body)
+				var responseInf schemas.RenameResponse
+				json.Unmarshal(body, &responseInf)
+				if responseInf.Message != "" {
+					fmt.Println(responseInf.Message)
 				}
 			}
 		case "move":
@@ -110,6 +170,28 @@ func main() {
 					fmt.Println("Too much arguments")
 					continue
 				}
+				oldLocation, filename, err := getLocationAndFileName(arguments[1])
+				newLocation := arguments[2]
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				request, err := CreateMoveRequest(oldLocation, filename, newLocation)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				response := client.DoRequest(request)
+				if response.StatusCode != 200 {
+					fmt.Println("Server error occurred")
+					continue
+				}
+				body, _ := io.ReadAll(response.Body)
+				var responseInf schemas.MoveResponse
+				json.Unmarshal(body, &responseInf)
+				if responseInf.Message != "" {
+					fmt.Println(responseInf.Message)
+				}
 			}
 		case "copy":
 			{
@@ -120,15 +202,58 @@ func main() {
 					fmt.Println("Too much arguments")
 					continue
 				}
+				srcLocation, filename, err := getLocationAndFileName(arguments[1])
+				destLocation := arguments[2]
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				request, err := CreateCopyRequest(srcLocation, filename, destLocation)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				response := client.DoRequest(request)
+				if response.StatusCode != 200 {
+					fmt.Println("Server error occurred")
+					continue
+				}
+				body, _ := io.ReadAll(response.Body)
+				var responseInf schemas.CopyResponse
+				json.Unmarshal(body, &responseInf)
+				if responseInf.Message != "" {
+					fmt.Println(responseInf.Message)
+				}
 			}
 		case "delete":
 			{
-				if len(arguments) < 3 {
+				if len(arguments) < 2 {
 					fmt.Println("Not enough arguments")
 					continue
-				} else if len(arguments) > 3 {
+				} else if len(arguments) > 2 {
 					fmt.Println("Too much arguments")
 					continue
+				}
+				location, fileame, err := getLocationAndFileName(arguments[1])
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				request, err := CreateDeleteRequest(location, fileame)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				response := client.DoRequest(request)
+				if response.StatusCode != 200 {
+					fmt.Println("Server error occurred")
+					continue
+				}
+				body, _ := io.ReadAll(response.Body)
+				var responseInf schemas.DeleteResponse
+				json.Unmarshal(body, &responseInf)
+				if responseInf.Message != "" {
+					fmt.Println(responseInf.Message)
 				}
 			}
 		default:
@@ -155,13 +280,11 @@ func getLocationAndFileName(path string) (string, string, error) {
 	}
 	dirList := splitPath(path)
 	if string(path[0]) == pathSeparator {
-		location = joinPath(dirList[:len(dirList)-1])
+		location = pathSeparator + joinPath(dirList[:len(dirList)-1])
 		filename = dirList[len(dirList)-1]
 	} else {
-		upperDirList := splitPath(state.curPath)
-		fullDirList := append(upperDirList, dirList[:len(dirList)-1]...)
-		location = joinPath(fullDirList)
-		filename = dirList[len(fullDirList)-1]
+		location = joinPath(dirList[:len(dirList)-1])
+		filename = dirList[len(dirList)-1]
 	}
 	return location, filename, nil
 }

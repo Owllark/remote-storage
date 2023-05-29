@@ -68,6 +68,8 @@ func MkDir(w http.ResponseWriter, r *http.Request) {
 	response.Path = curPath
 	if err != nil {
 		response.Message = err.Error()
+	} else {
+		response.Message = "directory created successfully"
 	}
 	body, err := json.Marshal(response)
 	w.Write([]byte(body))
@@ -87,6 +89,8 @@ func Rename(w http.ResponseWriter, r *http.Request) {
 	response.Path = path
 	if err != nil {
 		response.Message = err.Error()
+	} else {
+		response.Message = "renamed successfully"
 	}
 	body, err := json.Marshal(response)
 	w.Write([]byte(body))
@@ -106,6 +110,8 @@ func Move(w http.ResponseWriter, r *http.Request) {
 	response.Path = path
 	if err != nil {
 		response.Message = err.Error()
+	} else {
+		response.Message = "moved successfully"
 	}
 	body, err := json.Marshal(response)
 	w.Write([]byte(body))
@@ -125,6 +131,8 @@ func Copy(w http.ResponseWriter, r *http.Request) {
 	response.Path = path
 	if err != nil {
 		response.Message = err.Error()
+	} else {
+		response.Message = "copied successfully"
 	}
 	body, err := json.Marshal(response)
 	w.Write([]byte(body))
@@ -144,6 +152,8 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	response.Path = path
 	if err != nil {
 		response.Message = err.Error()
+	} else {
+		response.Message = "deleted successfully"
 	}
 	body, err := json.Marshal(response)
 	w.Write([]byte(body))
