@@ -1,9 +1,10 @@
 package router
 
-import (
+/*import (
 	"log"
 	"net/http"
 	"time"
+	"github.com/gorilla/mux"
 )
 
 type HttpRouter struct {
@@ -11,13 +12,16 @@ type HttpRouter struct {
 	serverHandler tServerHandler
 }
 
-func NewHttpRouter() *HttpRouter {
+/*func NewHttpRouter() *HttpRouter {
 	h := tServerHandler{
 		mux: make(map[string]func(http.ResponseWriter, *http.Request)),
 	}
 	r := HttpRouter{
 		serverHandler: h,
 	}
+	router := mux.NewRouter()
+	var n int
+	n = router
 	return &r
 }
 
@@ -47,3 +51,4 @@ func (r *HttpRouter) Listen() {
 func (r *HttpRouter) AddHandler(url string, f func(http.ResponseWriter, *http.Request)) {
 	r.serverHandler.mux[url] = f
 }
+*/

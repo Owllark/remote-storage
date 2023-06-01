@@ -10,14 +10,13 @@ import (
 	"remote-storage/client/http_client"
 	"remote-storage/schemas"
 	"strings"
-	"time"
 )
 
 const (
-	total         = 100
-	barSize       = 20
+	barSize       = 100
 	serverUrl     = "http://localhost:8080/"
 	pathSeparator = string(os.PathSeparator)
+	CHUNK_SIZE    = 64 * 1024
 )
 
 type State struct {
@@ -26,18 +25,65 @@ type State struct {
 
 var state State
 
+var username string
+
+var jwtToken string
+
 func main() {
 	client := http_client.NewHttpClient("")
 	reader := bufio.NewReader(os.Stdin)
 	var isOver = false
 	state.curPath = ""
+	isAuthenticated := false
+	for !isAuthenticated {
+		fmt.Println("Enter your name:")
+		name, _ := reader.ReadString('\n')
+		fmt.Println("Enter your password:")
+		password, _ := reader.ReadString('\n')
+		name = strings.TrimSuffix(name, "\r\n")
+		password = strings.TrimSuffix(password, "\r\n")
+		request, _ := CreateAuthenticationRequest(name, password)
+		response, err := client.DoRequest(request)
+		if err != nil {
+			fmt.Println("Problem with server connection")
+			continue
+		}
+		if response.StatusCode == 401 {
+			fmt.Println("Authentication failed")
+			continue
+		} else if response.StatusCode != 200 {
+			fmt.Println("Server error occurred")
+			continue
+		}
+		isTokenReceived := false
+		for _, cookie := range response.Cookies() {
+			if cookie.Name == "token" {
+				jwtToken = cookie.Value
+				isTokenReceived = true
+			}
+		}
+		if !isTokenReceived {
+			fmt.Println("Error accepting necessary cookies")
+			continue
+		}
+		isAuthenticated = true
+		var responseInf schemas.AuthenticateResponse
+		body, _ := io.ReadAll(response.Body)
+		json.Unmarshal(body, &responseInf)
+		username = name
+		fmt.Println("Authenticated successfully")
+	}
 	for !isOver {
-		fmt.Print(fmt.Sprintf("%s>", state.curPath))
+		fmt.Print(fmt.Sprintf("%s%s>", username, state.curPath))
 		var req string
 		req, _ = reader.ReadString('\n')
 		req = req[0 : len(req)-2]
 		arguments := strings.Split(req, " ")
 		switch arguments[0] {
+		case "":
+			{
+				continue
+			}
 		case "mkdir":
 			{
 				if len(arguments) < 2 {
@@ -57,7 +103,11 @@ func main() {
 					fmt.Println(err)
 					continue
 				}
-				response := client.DoRequest(request)
+				response, err := client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
+					continue
+				}
 				if response.StatusCode != 200 {
 					fmt.Println("Server error occurred")
 					continue
@@ -84,7 +134,11 @@ func main() {
 					fmt.Println(err)
 					continue
 				}
-				response := client.DoRequest(request)
+				response, err := client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
+					continue
+				}
 				if response.StatusCode != 200 {
 					fmt.Println("Server error occurred")
 					continue
@@ -112,7 +166,11 @@ func main() {
 					fmt.Println(err)
 					continue
 				}
-				response := client.DoRequest(request)
+				response, err := client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
+					continue
+				}
 				if response.StatusCode != 200 {
 					fmt.Println("Server error occurred")
 					continue
@@ -149,7 +207,11 @@ func main() {
 					fmt.Println(err)
 					continue
 				}
-				response := client.DoRequest(request)
+				response, err := client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
+					continue
+				}
 				if response.StatusCode != 200 {
 					fmt.Println("Server error occurred")
 					continue
@@ -181,7 +243,11 @@ func main() {
 					fmt.Println(err)
 					continue
 				}
-				response := client.DoRequest(request)
+				response, err := client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
+					continue
+				}
 				if response.StatusCode != 200 {
 					fmt.Println("Server error occurred")
 					continue
@@ -213,7 +279,11 @@ func main() {
 					fmt.Println(err)
 					continue
 				}
-				response := client.DoRequest(request)
+				response, err := client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
+					continue
+				}
 				if response.StatusCode != 200 {
 					fmt.Println("Server error occurred")
 					continue
@@ -234,19 +304,19 @@ func main() {
 					fmt.Println("Too much arguments")
 					continue
 				}
-				location, fileame, err := getLocationAndFileName(arguments[1])
+				location, filename, err := getLocationAndFileName(arguments[1])
 				if err != nil {
 					fmt.Println(err)
 					continue
 				}
-				request, err := CreateDeleteRequest(location, fileame)
+				request, err := CreateDeleteRequest(location, filename)
 				if err != nil {
 					fmt.Println(err)
 					continue
 				}
-				response := client.DoRequest(request)
-				if response.StatusCode != 200 {
-					fmt.Println("Server error occurred")
+				response, err := client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
 					continue
 				}
 				body, _ := io.ReadAll(response.Body)
@@ -256,6 +326,157 @@ func main() {
 					fmt.Println(responseInf.Message)
 				}
 			}
+		case "upload":
+			{
+				if len(arguments) < 2 {
+					fmt.Println("Not enough arguments")
+					continue
+				} else if len(arguments) > 3 {
+					fmt.Println("Too much arguments")
+					continue
+				}
+				path := arguments[1]
+				chunks, err := DivideFileIntoChunks(path, CHUNK_SIZE)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				_, filename, err := getLocationAndFileName(path)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				var location string
+				if len(arguments) == 2 {
+					location = "/"
+				} else {
+					location = arguments[2]
+				}
+
+				chunksUploaded := 0
+				chunksAmount := len(chunks)
+				request, err := CreateStartUploadRequest(location, filename, len(chunks))
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				_, err = client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
+					continue
+				}
+				for i, chunk := range chunks {
+					request, err := CreateUploadChunkRequest(chunk, i)
+					if err != nil {
+						fmt.Println(err)
+						continue
+					}
+					response, err := client.DoRequest(request)
+					if err == nil && response.StatusCode == 200 {
+						chunksUploaded++
+					}
+					PrintProgressBar(chunksUploaded, chunksAmount)
+				}
+				var allChunksAccepted bool
+				for !allChunksAccepted {
+					request, err := CreateCompleteUploadRequest()
+					if err != nil {
+						fmt.Println(err)
+						continue
+					}
+					response, err := client.DoRequest(request)
+					if err != nil {
+						fmt.Println("Problem with server connection")
+						continue
+					}
+					var responseInf schemas.CompleteUploadResponse
+					body, _ := io.ReadAll(response.Body)
+					json.Unmarshal(body, &responseInf)
+					if len(responseInf.MissedChunks) == 0 {
+						allChunksAccepted = true
+						PrintProgressBar(chunksUploaded, chunksAmount)
+						fmt.Println()
+						fmt.Println(responseInf.Message)
+					} else {
+						for _, i := range responseInf.MissedChunks {
+							request, err := CreateUploadChunkRequest(chunks[i], i)
+							if err != nil {
+								fmt.Println(err)
+								continue
+							}
+							response, err := client.DoRequest(request)
+							if err == nil && response.StatusCode == 200 {
+								chunksUploaded++
+							}
+							PrintProgressBar(chunksUploaded, chunksAmount)
+						}
+					}
+				}
+
+			}
+		case "download":
+			{
+				if len(arguments) < 2 {
+					fmt.Println("Not enough arguments")
+					continue
+				} else if len(arguments) > 3 {
+					fmt.Println("Too much arguments")
+					continue
+				}
+				var downloadLocation string
+				if len(arguments) == 2 {
+					downloadLocation = ""
+				} else {
+					downloadLocation = arguments[2]
+				}
+				location, filename, err := getLocationAndFileName(arguments[1])
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				request, err := CreateStartDownloadRequest(location, filename)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				response, err := client.DoRequest(request)
+				if err != nil {
+					fmt.Println("Problem with server connection")
+					continue
+				}
+				if response.StatusCode != 200 {
+					fmt.Println("error downloading file")
+					continue
+				}
+				var responseInf schemas.StartDownloadResponse
+				body, _ := io.ReadAll(response.Body)
+				json.Unmarshal(body, &responseInf)
+				file, err := os.OpenFile(downloadLocation+filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+				chunkNum := responseInf.ChunksNum
+				for i := 0; i < chunkNum; i++ {
+					isChunkDownloaded := false
+					request, err := CreateDownloadChunkRequest(i)
+					if err != nil {
+						fmt.Println(err)
+						break
+					}
+					for !isChunkDownloaded {
+						response, err := client.DoRequest(request)
+						if err != nil {
+							fmt.Println("Problem with server connection")
+							continue
+						}
+						if response.StatusCode == 200 {
+							isChunkDownloaded = true
+							data, _ := io.ReadAll(response.Body)
+							file.Write(data)
+
+						}
+					}
+
+				}
+				file.Close()
+			}
 		default:
 			{
 				fmt.Println(fmt.Sprintf("WRONG REQUEST: %s UNDEFINED", arguments[0]))
@@ -264,13 +485,60 @@ func main() {
 		}
 	}
 
-	for i := 0; i <= total; i++ {
-		progress := i * barSize / total
-		fmt.Printf("\r[%s%s] %d%%", getProgressBar(progress), getEmptyBar(barSize-progress), i)
-		time.Sleep(100 * time.Millisecond)
+}
+
+func PrintProgressBar(n, total int) {
+	var progress int
+	var percent int
+	if total == 0 {
+		progress = barSize
+		percent = 100
+	} else {
+		progress = n * barSize / total
+		percent = n * 100 / total
+	}
+	fmt.Printf("\r[%s%s] %d%%", getProgressBar(progress), getEmptyBar(barSize-progress), percent)
+}
+
+func DivideFileIntoChunks(path string, chunkSize int) ([][]byte, error) {
+	var chunks [][]byte
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return chunks, err
+	}
+	defer file.Close()
+
+	fileInfo, _ := file.Stat()
+	fileSize := fileInfo.Size()
+
+	fullChunksAmount := int(fileSize) / chunkSize
+	lastChunkSize := int(fileSize) % chunkSize
+	chunkAmount := fullChunksAmount
+	if lastChunkSize > 0 {
+		chunkAmount++
+	}
+	chunks = make([][]byte, chunkAmount)
+
+	for i := 0; i < fullChunksAmount; i++ {
+		chunk := make([]byte, chunkSize)
+		_, err := file.Read(chunk)
+		if err != nil {
+			return chunks, err
+		}
+		chunks[i] = chunk
 	}
 
-	fmt.Println("\nTask completed!")
+	if lastChunkSize > 0 {
+		lastChunk := make([]byte, lastChunkSize)
+		_, err := file.Read(lastChunk)
+		if err != nil {
+			return chunks, err
+		}
+		chunks[chunkAmount-1] = lastChunk
+	}
+
+	return chunks, err
 }
 
 func getLocationAndFileName(path string) (string, string, error) {

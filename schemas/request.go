@@ -55,3 +55,22 @@ type LsRequest struct {
 type TreeRequest struct {
 	DirPath string `json:"dir_path,omitempty"`
 }
+
+type StartUploadRequest struct {
+	Location  string `json:"location,omitempty"`
+	FileName  string `json:"file_name,omitempty"`
+	ChunksNum int    `json:"chunks_num"`
+}
+
+type CompleteUploadRequest struct {
+}
+
+type StartDownloadRequest struct {
+	Location string `json:"location,omitempty"`
+	FileName string `json:"file_name,omitempty"`
+}
+
+type AuthenticateRequest struct {
+	Name     string `json:"name,omitempty"`
+	Password string `json:"password,omitempty"`
+}

@@ -57,3 +57,25 @@ type TreeResponse struct {
 	// command output
 	CommandOutput []string `json:"command_output,omitempty"`
 }
+
+type StartUploadResponse struct {
+	// message if something went wrong
+	Message string `json:"message,omitempty"`
+}
+
+type CompleteUploadResponse struct {
+	// array of missed chunks ids
+	MissedChunks []int `json:"missed_chunks"`
+	// message if something went wrong
+	Message string `json:"message,omitempty"`
+}
+
+type StartDownloadResponse struct {
+	ChunksNum int `json:"chunks_num"`
+	// message if something went wrong
+	Message string `json:"message,omitempty"`
+}
+
+type AuthenticateResponse struct {
+	RootDir string `json:"root_dir,omitempty"`
+}

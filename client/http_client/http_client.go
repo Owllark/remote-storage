@@ -9,7 +9,7 @@ import (
 	Get()
 	Put()
 	Post()
-	Delete()
+	RemoveAll()
 }*/
 
 type HttpClient struct {
@@ -38,7 +38,7 @@ func (c *HttpClient) Post(api string, contentType string, body []byte) *http.Res
 	return resp
 }
 
-func (c *HttpClient) DoRequest(request *http.Request) *http.Response {
-	resp, _ := c.client.Do(request)
-	return resp
+func (c *HttpClient) DoRequest(request *http.Request) (*http.Response, error) {
+	resp, err := c.client.Do(request)
+	return resp, err
 }

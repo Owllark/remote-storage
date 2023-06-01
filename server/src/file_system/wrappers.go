@@ -12,7 +12,8 @@ func (fs *FileSystem) Create(filepath string) (*os.File, error) {
 }
 
 func (fs *FileSystem) Write(filepath string, data []byte) (int, error) {
-	file, err := os.Open(fs.getPath(filepath))
+	file, err := os.OpenFile(fs.getPath(filepath), os.O_RDWR, 0644)
+	defer file.Close()
 	if err != nil {
 		return 0, err
 	}
@@ -20,7 +21,12 @@ func (fs *FileSystem) Write(filepath string, data []byte) (int, error) {
 	return writtenBytesNum, err
 }
 
-func (fs *FileSystem) Delete(filePath string) error {
+func (fs *FileSystem) RemoveAll(filePath string) error {
+	err := os.RemoveAll(fs.getPath(filePath))
+	return err
+}
+
+func (fs *FileSystem) Remove(filePath string) error {
 	err := os.Remove(fs.getPath(filePath))
 	return err
 }
