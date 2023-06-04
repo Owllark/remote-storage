@@ -1,4 +1,4 @@
-package schemas
+package common
 
 // all paths must be with separator in the end
 
@@ -70,6 +70,13 @@ type CompleteUploadResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
+type UploadChunkResponse struct {
+}
+
+type DownloadChunkResponse struct {
+	Data []byte `json:"data,omitempty"`
+}
+
 type StartDownloadResponse struct {
 	ChunksNum int `json:"chunks_num"`
 	// message if something went wrong
@@ -78,4 +85,8 @@ type StartDownloadResponse struct {
 
 type AuthenticateResponse struct {
 	RootDir string `json:"root_dir,omitempty"`
+}
+
+type GetStateResponse struct {
+	Info FileInfo `json:"info"`
 }

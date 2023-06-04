@@ -3,6 +3,8 @@ package file_system
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"remote-storage/common"
 	"strings"
 )
 
@@ -11,9 +13,53 @@ const pathSeparator = string(os.PathSeparator)
 func (fs *FileSystem) getPath(path string) string {
 	var res string
 	res += fs.rootDir
-	res += fs.currentDir
+	//res += fs.currentDir
 	res += path
 	return res
+}
+
+func traverseDirectory(dirPath string) (common.FileInfo, error) {
+	file := common.FileInfo{
+		Name:     filepath.Base(dirPath),
+		IsDir:    true,
+		Children: []common.FileInfo{},
+	}
+
+	// Open the directory and get its contents
+	dir, err := os.Open(dirPath)
+	if err != nil {
+		return file, err
+	}
+	defer dir.Close()
+
+	fileInfos, err := dir.Readdir(-1)
+	if err != nil {
+		return file, err
+	}
+
+	// Iterate over the contents
+	for _, fileInfo := range fileInfos {
+		// Create a FileInfo struct for each file or directory
+		child := common.FileInfo{
+			Name:     fileInfo.Name(),
+			IsDir:    fileInfo.IsDir(),
+			Size:     fileInfo.Size(),
+			Modified: fileInfo.ModTime(),
+		}
+
+		if child.IsDir {
+			// Recursively traverse nested directories
+			nestedFileInfo, err := traverseDirectory(filepath.Join(dirPath, child.Name))
+			if err != nil {
+				return file, err
+			}
+			child.Children = nestedFileInfo.Children
+		}
+
+		file.Children = append(file.Children, child)
+	}
+
+	return file, nil
 }
 
 func (fs *FileSystem) DivideFileIntoChunks(path string, chunkSize int) ([][]byte, error) {
@@ -67,6 +113,10 @@ func joinPath(path []string) string {
 
 func splitPath(path string) []string {
 	res := strings.Split(path, string(os.PathSeparator))
+	if res[len(res)-1] == "" {
+		res = res[:len(res)-1]
+	}
+
 	return res
 }
 

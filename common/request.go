@@ -1,4 +1,4 @@
-package schemas
+package common
 
 // all paths must be with separator in the end
 
@@ -60,6 +60,14 @@ type StartUploadRequest struct {
 	Location  string `json:"location,omitempty"`
 	FileName  string `json:"file_name,omitempty"`
 	ChunksNum int    `json:"chunks_num"`
+}
+
+type UploadChunkRequest struct {
+	Id   int    `json:"id,omitempty"`
+	Data []byte `json:"data,omitempty"`
+}
+
+type DownloadChunkRequest struct {
 }
 
 type CompleteUploadRequest struct {

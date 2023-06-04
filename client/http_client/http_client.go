@@ -5,12 +5,9 @@ import (
 	"net/http"
 )
 
-/*type Client interface {
-	Get()
-	Put()
-	Post()
-	RemoveAll()
-}*/
+type Client interface {
+	DoRequest(request *http.Request) (*http.Response, error)
+}
 
 type HttpClient struct {
 	client     http.Client

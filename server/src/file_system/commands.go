@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"remote-storage/common"
 	"sort"
 	"strconv"
 )
@@ -16,51 +17,15 @@ type FileSystem struct {
 	rootDir     string
 }
 
-func (fs *FileSystem) Cd(path string) (string, error) {
-	var err error
-	switch path {
-	case "..":
-		{
-			if len(fs.currentPath) != 0 {
-				fs.prevPaths = append(fs.prevPaths, joinPath(fs.currentPath))
-				fs.currentPath = fs.currentPath[:len(fs.currentPath)-1]
-				fs.currentDir = joinPath(fs.currentPath)
-			}
-		}
-	case "/":
-		{
-			fs.prevPaths = append(fs.prevPaths, joinPath(fs.currentPath))
-			fs.currentPath = fs.currentPath[:0]
-			fs.currentDir = joinPath(fs.currentPath)
-		}
-	case "":
-		{
-			fs.prevPaths = append(fs.prevPaths, joinPath(fs.currentPath))
-			fs.currentPath = fs.currentPath[:0]
-			fs.currentDir = joinPath(fs.currentPath)
-		}
-	case "-":
-		{
-			if len(fs.prevPaths) != 0 {
-				fs.currentPath = splitPath(fs.prevPaths[len(fs.prevPaths)-1])
-				fs.prevPaths = fs.prevPaths[:len(fs.prevPaths)]
-				fs.currentDir = joinPath(fs.currentPath)
-			}
-		}
-	default:
-		{
-			if fs.isDirectoryExists(path) {
-				fs.prevPaths = append(fs.prevPaths, joinPath(fs.currentPath))
-				fs.currentPath = append(fs.currentPath, splitPath(path)...)
-				fs.currentDir = joinPath(fs.currentPath)
-			} else {
-				err = errors.New(fmt.Sprintf("directory %s not found", path))
-			}
+func (fs *FileSystem) Reset() {
+	fs.currentDir = ""
+	fs.currentPath = fs.currentPath[:0]
+	fs.prevPaths = fs.prevPaths[:0]
+}
 
-		}
-
-	}
-	return joinPath(fs.currentPath), err
+func (fs *FileSystem) GetFileSystemState() (common.FileInfo, error) {
+	res, err := traverseDirectory(fs.rootDir)
+	return res, err
 }
 
 func (fs *FileSystem) MkDir(path string, dir string) (string, error) {
@@ -158,26 +123,6 @@ func (fs *FileSystem) CopyCmd(srcDirPath, fileName, destDirPath string) (string,
 	}
 
 	return newFilePath, err
-}
-
-func (fs *FileSystem) Ls(dirPath string) ([]string, error) {
-	var fileNames []string
-	files, err := os.ReadDir(fs.getPath(dirPath))
-	if err != nil {
-		if err != nil {
-			switch {
-			case os.IsNotExist(err):
-				err = errors.New(fmt.Sprintf("%s not found", dirPath))
-			default:
-				err = errors.New(fmt.Sprintf("error listing files of directory"))
-			}
-		}
-		return fileNames, err
-	}
-	for _, file := range files {
-		fileNames = append(fileNames, file.Name())
-	}
-	return fileNames, nil
 }
 
 func (fs *FileSystem) AssembleFiles(location, dirPath, fileName string) error {

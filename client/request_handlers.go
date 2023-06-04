@@ -3,123 +3,148 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"net/url"
-	"remote-storage/schemas"
+	"remote-storage/common"
 	"strconv"
 )
 
 func CreateMkDirRequest(path, dirname string) (*http.Request, error) {
-	var body = schemas.MkDirRequest{Path: path, DirName: dirname}
-	request, err := createRequestJson(body, "mkdir")
+	var body = common.MkDirRequest{Path: path, DirName: dirname}
+	request, err := createPostRequestJson(body, "mkdir")
 	return request, err
 }
 
 func CreateCdRequest(location string) (*http.Request, error) {
-	var body = schemas.CdRequest{Path: location}
-	request, err := createRequestJson(body, "cd")
+	var body = common.CdRequest{Path: location}
+	request, err := createPostRequestJson(body, "cd")
 	return request, err
 }
 
 func CreateLsRequest(location string) (*http.Request, error) {
-	var body = schemas.LsRequest{DirPath: location}
-	request, err := createRequestJson(body, "ls")
+	var body = common.LsRequest{DirPath: location}
+	request, err := createPostRequestJson(body, "ls")
 	return request, err
 }
 
 func CreateRenameRequest(location, oldName, newName string) (*http.Request, error) {
-	var body = schemas.RenameRequest{
+	var body = common.RenameRequest{
 		DirPath: location,
 		OldName: oldName,
 		NewName: newName,
 	}
-	request, err := createRequestJson(body, "rename")
+	request, err := createPostRequestJson(body, "rename")
 	return request, err
 }
 
 func CreateMoveRequest(srcLocation, filename, destLocation string) (*http.Request, error) {
-	var body = schemas.MoveRequest{
+	var body = common.MoveRequest{
 		SrcDirPath:  srcLocation,
 		FileName:    filename,
 		DestDirPath: destLocation,
 	}
-	request, err := createRequestJson(body, "move")
+	request, err := createPostRequestJson(body, "move")
 	return request, err
 }
 
 func CreateCopyRequest(srcLocation, filename, destLocation string) (*http.Request, error) {
-	var body = schemas.CopyRequest{
+	var body = common.CopyRequest{
 		SrcDirPath:  srcLocation,
 		FileName:    filename,
 		DestDirPath: destLocation,
 	}
-	request, err := createRequestJson(body, "copy")
+	request, err := createPostRequestJson(body, "copy")
 	return request, err
 }
 
 func CreateDeleteRequest(location, filename string) (*http.Request, error) {
-	var body = schemas.DeleteRequest{
+	var body = common.DeleteRequest{
 		DirPath:  location,
 		FileName: filename,
 	}
-	request, err := createRequestJson(body, "delete")
+	request, err := createPostRequestJson(body, "delete")
 	return request, err
 }
 
 func CreateStartUploadRequest(location, filename string, chunksNum int) (*http.Request, error) {
-	var body = schemas.StartUploadRequest{
+	var body = common.StartUploadRequest{
 		Location:  location,
 		FileName:  filename,
 		ChunksNum: chunksNum,
 	}
-	request, err := createRequestJson(body, "upload")
+	request, err := createPostRequestJson(body, "upload")
 	return request, err
 }
 
 func CreateUploadChunkRequest(chunk []byte, id int) (*http.Request, error) {
-	body := chunk
-	params := url.Values{}
-	params.Set("id", strconv.Itoa(id))
-	requestURL := fmt.Sprintf("%s?%s", "upload/chunk", params.Encode())
-	request, err := createRequestPlain(body, requestURL)
+	var body = common.UploadChunkRequest{
+		Id:   id,
+		Data: chunk,
+	}
+	request, err := createPostRequestJson(body, "upload/chunk")
+	q := request.URL.Query()
+	q.Add("id", strconv.Itoa(id))
+	request.URL.RawQuery = q.Encode()
 	return request, err
 }
 
 func CreateCompleteUploadRequest() (*http.Request, error) {
-	var body = schemas.CompleteUploadResponse{}
-	request, err := createRequestJson(body, "upload/completed")
+	var body = common.CompleteUploadResponse{}
+	request, err := createPostRequestJson(body, "upload/completed")
 	return request, err
 }
 
 func CreateStartDownloadRequest(location, filename string) (*http.Request, error) {
-	var body = schemas.StartDownloadRequest{
+	var body = common.StartDownloadRequest{
 		Location: location,
 		FileName: filename,
 	}
-	request, err := createRequestJson(body, "download")
+	request, err := createPostRequestJson(body, "download")
 	return request, err
 }
 
 func CreateDownloadChunkRequest(id int) (*http.Request, error) {
-	body := ""
-	params := url.Values{}
-	params.Set("id", strconv.Itoa(id))
-	requestURL := fmt.Sprintf("%s?%s", "download/chunk", params.Encode())
-	request, err := createRequestPlain([]byte(body), requestURL)
+	var body = ""
+	request, err := createPostRequestJson(body, "download/chunk")
+	q := request.URL.Query()
+	q.Add("id", strconv.Itoa(id))
+	request.URL.RawQuery = q.Encode()
 	return request, err
 }
 
 func CreateAuthenticationRequest(name, password string) (*http.Request, error) {
-	var body = schemas.AuthenticateRequest{
+	var body = common.AuthenticateRequest{
 		Name:     name,
 		Password: password,
 	}
-	request, err := createRequestJson(body, "authenticate")
+	request, err := createPostRequestJson(body, "authenticate")
 	return request, err
 }
 
-func createRequestJson(body any, api string) (*http.Request, error) {
+func CreateGetFileSystemStateRequest() (*http.Request, error) {
+	request, err := createGetRequest("state")
+	return request, err
+}
+
+func CreateLogoutRequest() (*http.Request, error) {
+	request, err := createGetRequest("logout")
+	return request, err
+}
+
+func CreateRefreshRequest() (*http.Request, error) {
+	request, err := createGetRequest("refresh")
+	return request, err
+}
+
+func createGetRequest(api string) (*http.Request, error) {
+	request, err := http.NewRequest("GET", serverUrl+api, nil)
+	cookie := &http.Cookie{
+		Name:  "token",
+		Value: jwtToken,
+	}
+	request.AddCookie(cookie)
+	return request, err
+}
+func createPostRequestJson(body any, api string) (*http.Request, error) {
 	var request *http.Request
 	var err error
 	var bodyBytes []byte

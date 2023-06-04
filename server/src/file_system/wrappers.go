@@ -54,13 +54,13 @@ func (fs *FileSystem) Copy(srcPath, destPath string) error {
 		return err
 	}
 
+	if !srcInfo.IsDir() {
+		return CopyFile(srcPath, destPath)
+	}
+
 	err = os.MkdirAll(destPath, srcInfo.Mode())
 	if err != nil {
 		return err
-	}
-
-	if !srcInfo.IsDir() {
-		return CopyFile(srcPath, destPath)
 	}
 
 	return filepath.Walk(srcPath, func(filePath string, info os.FileInfo, err error) error {

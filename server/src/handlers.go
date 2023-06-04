@@ -3,16 +3,16 @@ package main
 import (
 	"encoding/json"
 	"github.com/golang-jwt/jwt/v4"
-	"io"
 	"net/http"
 	"os"
-	"remote-storage/schemas"
+	"remote-storage/common"
 	"remote-storage/server/src/helper"
 	"strconv"
 	"time"
 )
 
 const chunkSize = 64 * 1024
+const tokenExpirationTime = 2 * time.Minute
 
 func f(w http.ResponseWriter, r *http.Request) {
 
@@ -20,52 +20,32 @@ func f(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello, world!"))
 }
 
-func Cd(w http.ResponseWriter, r *http.Request) {
+func GetState(w http.ResponseWriter, r *http.Request) {
+
 	client, err := checkBearer(r)
 	if err != nil {
 		w.WriteHeader(401)
 		return
 	}
-	var request schemas.CdRequest
-	err = json.NewDecoder(r.Body).Decode(&request)
+
+	fileInfo, err := client.fs.GetFileSystemState()
 	if err != nil {
-		w.WriteHeader(400)
+		http.Error(w, "Error retrieving file system state", http.StatusInternalServerError)
 		return
 	}
-	curPath, err := client.fs.Cd(request.Path)
 
-	w.WriteHeader(200)
-	var response schemas.CdResponse
-	response.Path = curPath
-	if err != nil {
-		response.Message = err.Error()
-	}
+	var response common.GetStateResponse
+	response.Info = fileInfo
 	body, err := json.Marshal(response)
-	w.Write([]byte(body))
-}
-
-func Ls(w http.ResponseWriter, r *http.Request) {
-	client, err := checkBearer(r)
 	if err != nil {
-		w.WriteHeader(401)
+		// Handle the error appropriately
+		http.Error(w, "Error converting file system state to JSON", http.StatusInternalServerError)
 		return
 	}
-	var request schemas.LsRequest
-	err = json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		w.WriteHeader(400)
-		return
-	}
-	output, err := client.fs.Ls(request.DirPath)
 
-	w.WriteHeader(200)
-	var response schemas.LsResponse
-	response.CommandOutput = output
-	if err != nil {
-		response.Message = err.Error()
-	}
-	body, err := json.Marshal(response)
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(body))
+
 }
 
 func MkDir(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +54,7 @@ func MkDir(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var request schemas.MkDirRequest
+	var request common.MkDirRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(400)
@@ -83,7 +63,7 @@ func MkDir(w http.ResponseWriter, r *http.Request) {
 	curPath, err := client.fs.MkDir(request.Path, request.DirName)
 
 	w.WriteHeader(200)
-	var response schemas.MkDirResponse
+	var response common.MkDirResponse
 	response.Path = curPath
 	if err != nil {
 		response.Message = err.Error()
@@ -100,7 +80,7 @@ func Rename(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var request schemas.RenameRequest
+	var request common.RenameRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(400)
@@ -109,7 +89,7 @@ func Rename(w http.ResponseWriter, r *http.Request) {
 	path, err := client.fs.RenameCmd(request.DirPath, request.OldName, request.NewName)
 
 	w.WriteHeader(200)
-	var response schemas.RenameResponse
+	var response common.RenameResponse
 	response.Path = path
 	if err != nil {
 		response.Message = err.Error()
@@ -126,7 +106,7 @@ func Move(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var request schemas.MoveRequest
+	var request common.MoveRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(400)
@@ -135,7 +115,7 @@ func Move(w http.ResponseWriter, r *http.Request) {
 	path, err := client.fs.MoveCmd(request.SrcDirPath, request.FileName, request.DestDirPath)
 
 	w.WriteHeader(200)
-	var response schemas.CopyResponse
+	var response common.CopyResponse
 	response.Path = path
 	if err != nil {
 		response.Message = err.Error()
@@ -152,7 +132,7 @@ func Copy(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var request schemas.CopyRequest
+	var request common.CopyRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(400)
@@ -161,7 +141,7 @@ func Copy(w http.ResponseWriter, r *http.Request) {
 	path, err := client.fs.CopyCmd(request.SrcDirPath, request.FileName, request.DestDirPath)
 
 	w.WriteHeader(200)
-	var response schemas.CopyResponse
+	var response common.CopyResponse
 	response.Path = path
 	if err != nil {
 		response.Message = err.Error()
@@ -178,7 +158,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var request schemas.DeleteRequest
+	var request common.DeleteRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(400)
@@ -187,7 +167,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	path, err := client.fs.DeleteCmd(request.DirPath, request.FileName)
 
 	w.WriteHeader(200)
-	var response schemas.CopyResponse
+	var response common.CopyResponse
 	response.Path = path
 	if err != nil {
 		response.Message = err.Error()
@@ -204,7 +184,7 @@ func StartUploading(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var request schemas.StartUploadRequest
+	var request common.StartUploadRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(400)
@@ -222,7 +202,7 @@ func StartUploading(w http.ResponseWriter, r *http.Request) {
 	client.upload.receivedChunks = make([]bool, client.upload.chunksNum)
 
 	w.WriteHeader(200)
-	var response schemas.StartUploadResponse
+	var response common.StartUploadResponse
 	if err != nil {
 		response.Message = err.Error()
 	} else {
@@ -241,13 +221,19 @@ func UploadChunk(w http.ResponseWriter, r *http.Request) {
 	}
 	var id string
 	var data []byte
+	var request common.UploadChunkRequest
+	err = json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	}
 	id = r.URL.Query().Get("id")
 	num, err := strconv.Atoi(id)
 	if err != nil {
 		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+		return
 	}
-	data, _ = io.ReadAll(r.Body)
+	data = request.Data
 	filePath := client.upload.tempDir + string(os.PathSeparator) + id + ".bin"
 	file, err := client.fs.Create(filePath)
 	file.Close()
@@ -268,7 +254,7 @@ func UploadComplete(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var response schemas.CompleteUploadResponse
+	var response common.CompleteUploadResponse
 
 	var missedChunks = make([]int, 0)
 	for i, _ := range client.upload.receivedChunks {
@@ -298,7 +284,7 @@ func StartDownloading(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var request schemas.StartDownloadRequest
+	var request common.StartDownloadRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(400)
@@ -308,7 +294,7 @@ func StartDownloading(w http.ResponseWriter, r *http.Request) {
 	client.download.chunks, err = client.fs.DivideFileIntoChunks(request.Location+request.FileName, chunkSize)
 
 	w.WriteHeader(200)
-	var response schemas.StartDownloadResponse
+	var response common.StartDownloadResponse
 	response.ChunksNum = len(client.download.chunks)
 	if err != nil {
 		response.Message = err.Error()
@@ -326,15 +312,17 @@ func DownloadChunk(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
-	var id string
-	id = r.URL.Query().Get("id")
-	num, err := strconv.Atoi(id)
+	//id := request.Id
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		w.WriteHeader(400)
 		w.Write([]byte(err.Error()))
 	}
+	var response common.DownloadChunkResponse
+	response.Data = client.download.chunks[id]
+	body, err := json.Marshal(response)
+	w.Write([]byte(body))
 	w.WriteHeader(200)
-	w.Write(client.download.chunks[num])
 }
 
 type Claims struct {
@@ -344,7 +332,7 @@ type Claims struct {
 
 func Authenticate(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var request schemas.AuthenticateRequest
+	var request common.AuthenticateRequest
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(400)
@@ -356,7 +344,7 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(tokenExpirationTime)
 	// Create the JWT claims, which includes the username and expiry time
 	claims := &Claims{
 		Username: request.Name,
@@ -383,12 +371,73 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		Value:   tokenString,
 		Expires: expirationTime,
 	})
-
-	var response schemas.AuthenticateResponse
-	response.RootDir = request.Name + pathSeparator
+	var client *Client
+	for i, _ := range clients {
+		if clients[i].inf.Name == request.Name {
+			client = &clients[i]
+		}
+	}
+	var response common.AuthenticateResponse
+	response.RootDir = client.inf.RootDir
+	client.fs.Reset()
 	body, err := json.Marshal(response)
 	w.Write([]byte(body))
 	w.WriteHeader(200)
+}
+
+func Refresh(w http.ResponseWriter, r *http.Request) {
+	// (BEGIN) The code until this point is the same as the first part of the `Welcome` route
+	c, err := r.Cookie("token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	tknStr := c.Value
+	claims := &Claims{}
+	tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if !tkn.Valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// Now, create a new token for the current use, with a renewed expiration time
+	expirationTime := time.Now().Add(5 * time.Minute)
+	claims.ExpiresAt = jwt.NewNumericDate(expirationTime)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the new token as the users `token` cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:    "token",
+		Value:   tokenString,
+		Expires: expirationTime,
+	})
+}
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	// immediately clear the token cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:    "token",
+		Expires: time.Now(),
+	})
 }
 
 func checkBearer(r *http.Request) (*Client, error) {

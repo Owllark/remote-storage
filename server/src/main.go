@@ -82,17 +82,15 @@ func main() {
 
 	rootFs.SetRootDir("storage" + pathSeparator)
 	r := mux.NewRouter()
-	r.HandleFunc("/test", f)
+
+	r.HandleFunc("/state", GetState)
+
 	r.HandleFunc("/rename", Rename)
 	r.HandleFunc("/move", Move)
 	r.HandleFunc("/copy", Copy)
 	r.HandleFunc("/delete", Delete)
 
-	r.HandleFunc("/cd", Cd)
 	r.HandleFunc("/mkdir", MkDir)
-	r.HandleFunc("/ls", Ls)
-	r.HandleFunc("/tree", f)
-	r.HandleFunc("/find", f)
 
 	r.HandleFunc("/upload", StartUploading)
 	r.HandleFunc("/upload/chunk", UploadChunk)
@@ -102,6 +100,8 @@ func main() {
 	r.HandleFunc("/download/chunk", DownloadChunk)
 
 	r.HandleFunc("/authenticate", Authenticate)
+	r.HandleFunc("/refresh", Refresh)
+	r.HandleFunc("/logout", Logout)
 
 	go AcceptInput()
 	err = http.ListenAndServe(":8080", r)
