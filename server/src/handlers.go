@@ -364,17 +364,17 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Finally, we set the Client cookie for "token" as the JWT we just generated
+	// Finally, we set the User cookie for "token" as the JWT we just generated
 	// we also set an expiry time which is the same as the token itself
 	http.SetCookie(w, &http.Cookie{
 		Name:    "token",
 		Value:   tokenString,
 		Expires: expirationTime,
 	})
-	var client *Client
-	for i, _ := range clients {
-		if clients[i].inf.Name == request.Name {
-			client = &clients[i]
+	var client *User
+	for i, _ := range users {
+		if users[i].inf.Name == request.Name {
+			client = &users[i]
 		}
 	}
 	var response common.AuthenticateResponse
@@ -440,8 +440,8 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func checkBearer(r *http.Request) (*Client, error) {
-	var res *Client
+func checkBearer(r *http.Request) (*User, error) {
+	var res *User
 	// We can obtain the session token from the requests cookies, which come with every request
 	c, err := r.Cookie("token")
 	if err != nil {
@@ -461,9 +461,9 @@ func checkBearer(r *http.Request) (*Client, error) {
 		return nil, err
 	}
 	username := claims.Username
-	for i, _ := range clients {
-		if clients[i].inf.Name == username {
-			res = &clients[i]
+	for i, _ := range users {
+		if users[i].inf.Name == username {
+			res = &users[i]
 		}
 	}
 	return res, nil

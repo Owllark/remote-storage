@@ -30,15 +30,15 @@ type downloadState struct {
 	chunks [][]byte
 }
 
-type Client struct {
+type User struct {
 	upload   uploadState
 	download downloadState
-	inf      helper.ClientInf
+	inf      helper.UserInf
 	fs       file_system.FileSystem
 	//rootDir  string
 }
 
-var clients []Client
+var users []User
 
 var database db.StorageDatabasePG
 
@@ -54,24 +54,6 @@ var jwtKey = []byte("secret")
 const storagePath = "storage" + pathSeparator
 
 func main() {
-	/*var route = router.NewHttpRouter()
-	route.AddHandler("/test", f)
-	route.AddHandler("/download", f)
-	route.AddHandler("/rename", Rename)
-	route.AddHandler("/move", Move)
-	route.AddHandler("/copy", Copy)
-	route.AddHandler("/delete", RemoveAll)
-
-	route.AddHandler("/cd", Cd)
-	route.AddHandler("/mkdir", MkDir)
-	route.AddHandler("/ls", Ls)
-	route.AddHandler("/tree", f)
-	route.AddHandler("/find", f)
-
-	route.AddHandler("/upload", StartUploading)
-	route.AddHandler("/upload_chunk/*id", UploadChunk)
-
-	route.Listen()*/
 
 	err := database.Connect(dbUser, dbPassword, dbName, dbHost)
 	if err != nil {
@@ -112,18 +94,18 @@ func main() {
 }
 
 func ClientsInit() {
-	clientList, err := database.GetClients()
+	clientList, err := database.GetUsers()
 	if err != nil {
-		log.Fatal("Failed to initialize clients:", err)
+		log.Fatal("Failed to initialize users:", err)
 	} else {
 		for _, client := range clientList {
 			var fs file_system.FileSystem
 			fs.SetRootDir(client.RootDir)
-			newClient := Client{
-				inf: helper.ClientInf{Name: client.Name},
+			newClient := User{
+				inf: helper.UserInf{Name: client.Name},
 				fs:  fs,
 			}
-			clients = append(clients, newClient)
+			users = append(users, newClient)
 		}
 	}
 }
@@ -136,7 +118,7 @@ func AcceptInput() {
 		req = req[0 : len(req)-2]
 		arguments := strings.Split(req, " ")
 		switch arguments[0] {
-		case "newclient":
+		case "newuser":
 			{
 				if len(arguments) < 3 {
 					fmt.Println("Not enough arguments")
@@ -147,27 +129,27 @@ func AcceptInput() {
 				}
 				name := arguments[1]
 				password := arguments[2]
-				clientInf := helper.ClientInf{
+				clientInf := helper.UserInf{
 					Name:    name,
 					RootDir: storagePath + name + pathSeparator,
 				}
-				err := database.CreateClient(name, password, clientInf.RootDir)
+				err := database.CreateUser(name, password, clientInf.RootDir)
 				if err != nil {
 					fmt.Println(err)
 				} else {
-					fmt.Println("Client created successfully")
+					fmt.Println("User created successfully")
 				}
-				rootFs.MkDir(pathSeparator, clientInf.RootDir)
+				rootFs.MkDir("", clientInf.Name)
 				var fs file_system.FileSystem
 				fs.SetRootDir(clientInf.RootDir)
-				newClient := Client{
-					inf: helper.ClientInf{Name: clientInf.Name},
+				newClient := User{
+					inf: helper.UserInf{Name: clientInf.Name},
 					fs:  fs,
 				}
-				clients = append(clients, newClient)
+				users = append(users, newClient)
 
 			}
-		case "getclients":
+		case "getusers":
 			{
 				if len(arguments) < 1 {
 					fmt.Println("Not enough arguments")
@@ -176,12 +158,12 @@ func AcceptInput() {
 					fmt.Println("Too much arguments")
 					continue
 				}
-				clientNames, err := database.GetClients()
+				userNames, err := database.GetUsers()
 				if err != nil {
 					fmt.Println(err)
 				} else {
-					fmt.Println("Clients:")
-					for _, c := range clientNames {
+					fmt.Println("Users:")
+					for _, c := range userNames {
 						fmt.Println(c.Name)
 					}
 				}

@@ -45,8 +45,8 @@ func (s *StorageDatabasePG) GetHashedPassword(name string) (string, error) {
 	return res, err
 }
 
-func (s *StorageDatabasePG) GetClients() ([]helper.ClientInf, error) {
-	var res []helper.ClientInf
+func (s *StorageDatabasePG) GetUsers() ([]helper.UserInf, error) {
+	var res []helper.UserInf
 	var err error
 
 	rows, err := s.db.Query(
@@ -62,7 +62,7 @@ func (s *StorageDatabasePG) GetClients() ([]helper.ClientInf, error) {
 		if err != nil {
 			continue
 		}
-		inf := helper.ClientInf{
+		inf := helper.UserInf{
 			Name:    string(name),
 			RootDir: string(rootDir),
 		}
@@ -73,7 +73,7 @@ func (s *StorageDatabasePG) GetClients() ([]helper.ClientInf, error) {
 	return res, err
 }
 
-func (s *StorageDatabasePG) CreateClient(name, password, rootDir string) error {
+func (s *StorageDatabasePG) CreateUser(name, password, rootDir string) error {
 	_, err := s.db.Exec(
 		"INSERT INTO clients (name, hashed_password, root_directory) VALUES($1, $2, $3)",
 		name,

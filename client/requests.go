@@ -242,6 +242,9 @@ func DownloadFile(client http_client.Client, downloadLocation, filename, remoteL
 	body, _ := io.ReadAll(response.Body)
 	json.Unmarshal(body, &responseInf)
 	file, err := os.OpenFile(downloadLocation+filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
 	chunkNum := responseInf.ChunksNum
 	for i := 0; i < chunkNum; i++ {
 		isChunkDownloaded := false

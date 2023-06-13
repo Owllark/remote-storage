@@ -125,10 +125,10 @@ func (fs *FileSystem) CopyCmd(srcDirPath, fileName, destDirPath string) (string,
 	return newFilePath, err
 }
 
-func (fs *FileSystem) AssembleFiles(location, dirPath, fileName string) error {
+func (fs *FileSystem) AssembleFiles(location, tempDirPath, fileName string) error {
 	var err error
-	dirPath = fs.getPath(dirPath)
-	files, err := os.ReadDir(dirPath)
+	tempDirPath = fs.getPath(tempDirPath)
+	files, err := os.ReadDir(tempDirPath)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (fs *FileSystem) AssembleFiles(location, dirPath, fileName string) error {
 
 	// Iterate over the files and append their contents to the output file
 	for _, file := range files {
-		filePath := filepath.Join(dirPath, file.Name())
+		filePath := filepath.Join(tempDirPath, file.Name())
 		fileContent, err := os.ReadFile(filePath)
 		if err != nil {
 			return err

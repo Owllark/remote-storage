@@ -1,6 +1,6 @@
 package helper
 
-type ClientInf struct {
+type UserInf struct {
 	Name    string
 	RootDir string
 }
