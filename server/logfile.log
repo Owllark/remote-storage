@@ -1,0 +1,2 @@
+ts=2023-07-26T20:27:32.3330524Z caller=logging_middleware.go:41 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-07-26T20:28:30.898603Z caller=main.go:142 message="Hello, world!"

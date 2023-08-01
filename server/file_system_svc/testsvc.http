@@ -1,0 +1,12 @@
+
+POST http://localhost:777/filesystem/rename
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJyb290X2RpciI6InRlc3QiLCJleHAiOjE2OTExMzgyMDJ9.DmfUFzsg38PLA1Ay9MOatzMYBy4OuG4Tkp0eN-0bFAQ
+Content-Type: application/json
+
+{
+  "dir_path": "api/",
+  "old_name": "not_server.go",
+  "new_name": "server.go"
+}
+
+
