@@ -101,7 +101,7 @@ func (s *StorageDatabasePG) CreateUser(name, password, rootDir string) error {
 	_, err := s.db.Exec(
 		"INSERT INTO clients (name, hashed_password, root_directory) VALUES($1, $2, $3)",
 		name,
-		helper2.Hash(name+password),
+		helper2.SHA256hashing(name+password),
 		rootDir,
 	)
 	return err

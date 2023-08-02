@@ -42,3 +42,17 @@ ts=2023-08-01T20:52:49.4560107Z caller=logging_middleware.go:39 method=GetState 
 ts=2023-08-01T20:53:00.4598016Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=server.go newName=not_server.go took=1.1115ms err=null
 ts=2023-08-01T20:53:16.5428945Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=server.go newName=not_server.go took=0s err="not found"
 ts=2023-08-01T20:53:26.1417158Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=0s err=null
+ts=2023-08-01T23:07:42.4610265Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=39.2538ms err=null
+ts=2023-08-01T23:20:45.5063775Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:21:15.1605203Z caller=logging_middleware.go:40 method=Rename dirPath= oldName= newName= took=0s err="not found"
+ts=2023-08-01T23:21:23.6596917Z caller=logging_middleware.go:40 method=Rename dirPath= oldName= newName= took=0s err="not found"
+ts=2023-08-01T23:21:26.5082583Z caller=logging_middleware.go:40 method=Rename dirPath= oldName= newName= took=505.6µs err="not found"
+ts=2023-08-01T23:25:04.318234Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:25:09.6883061Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:27:17.7193895Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:27:20.749711Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:31:38.6725407Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=7.8380877s err=null
+ts=2023-08-01T23:33:10.6650657Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=2.4954399s err=null
+ts=2023-08-01T23:34:13.2285422Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=0s err=null
+ts=2023-08-01T23:36:01.0136284Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=0s err=null
+ts=2023-08-01T23:37:25.2541663Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=567.7µs err=null

@@ -6,9 +6,12 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+	"io"
 	"net/http"
 	"reflect"
 )
+
+const chunkSize = 64 * 1
 
 type ctxRequestKey struct{}
 
@@ -22,6 +25,10 @@ func putRequestInCtx(ctx context.Context, r *http.Request) context.Context {
 // big comment in endpoints.go.
 type errorer interface {
 	error() error
+}
+
+type readCloserContainer interface {
+	ReadCloser() io.ReadCloser
 }
 
 func ApplyTransportMiddleware(endpoints *Endpoints, mw TransportMiddleware) Endpoints {
@@ -58,6 +65,18 @@ func MakeHttpHandler(s FileSystemService) http.Handler {
 		encodeResponse,
 		options...,
 	))
+	r.Methods("POST").Path("/filesystem/download").Handler(kithttp.NewServer(
+		e.DownloadEndpoint,
+		decodeDownloadRequest,
+		encodeChunkedResponse,
+		options...,
+	))
+	r.Methods("POST").Path("/filesystem/upload").Handler(kithttp.NewServer(
+		e.UploadEndpoint,
+		decodeUploadRequest,
+		encodeResponse,
+		options...,
+	))
 	r.Methods("POST").Path("/filesystem/mkdir").Handler(kithttp.NewServer(
 		e.MkDirEndpoint,
 		decodeMkDirRequest,
@@ -88,6 +107,7 @@ func MakeHttpHandler(s FileSystemService) http.Handler {
 		encodeResponse,
 		options...,
 	))
+
 	return r
 }
 
@@ -139,15 +159,74 @@ func decodeDeleteRequest(_ context.Context, r *http.Request) (interface{}, error
 	return request, nil
 }
 
+func decodeDownloadRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var request downloadRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		return nil, err
+	}
+	return request, nil
+}
+
+func decodeUploadRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var request uploadRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		return nil, err
+	}
+	return request, nil
+}
+
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	e, ok := response.(errorer)
 	if !ok && e.error() != nil {
 		// Not a Go kit transport error, but a business-logic error.
-		// Provide those as HTTP errors.
 		encodeError(ctx, e.error(), w)
 		return nil
 	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
+}
+
+func encodeChunkedResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	e, ok := response.(errorer)
+	if !ok && e.error() != nil {
+		// Not a Go kit transport error, but a business-logic error.
+		encodeError(ctx, e.error(), w)
+		return nil
+	}
+	r, ok := response.(readCloserContainer)
+	if !ok {
+		encodeError(ctx, ErrUnknownError, w)
+		return nil
+	}
+	srcBuffer := r.ReadCloser()
+	buffer := make([]byte, chunkSize)
+	for {
+		// Read the next chunk from the file
+		n, err := srcBuffer.Read(buffer)
+		if err == io.EOF {
+			// Reached the end of the file, break the loop
+			break
+		}
+		if err != nil {
+			// Error reading the file, handle it
+			encodeError(ctx, ErrUnknownError, w)
+			return nil
+		}
+
+		// Send the current chunk to the response writer
+		_, err = w.Write(buffer[:n])
+		if err != nil {
+			// Error sending the chunk, handle it
+			encodeError(ctx, ErrUnknownError, w)
+			return nil
+		}
+
+		// Flush the response writer to ensure the chunk is sent immediately
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+	}
+	return nil
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {

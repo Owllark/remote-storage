@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-kit/kit/endpoint"
+	"io"
 	fs "server/file_system_svc/repository/filesystem"
 )
 
@@ -14,6 +15,8 @@ type Endpoints struct {
 	MoveEndpoint     endpoint.Endpoint
 	CopyEndpoint     endpoint.Endpoint
 	DeleteEndpoint   endpoint.Endpoint
+	DownloadEndpoint endpoint.Endpoint
+	UploadEndpoint   endpoint.Endpoint
 }
 
 // MakeServerEndpoints returns an Endpoints struct where each endpoint invokes
@@ -26,6 +29,8 @@ func MakeServerEndpoints(s FileSystemService) Endpoints {
 		MoveEndpoint:     makeMoveEndpoint(s),
 		CopyEndpoint:     makeCopyEndpoint(s),
 		DeleteEndpoint:   makeDeleteEndpoint(s),
+		DownloadEndpoint: makeDownloadEndpoint(s),
+		UploadEndpoint:   makeUploadEndpoint(s),
 	}
 
 	return endpoints
@@ -94,6 +99,28 @@ func makeDeleteEndpoint(svc FileSystemService) endpoint.Endpoint {
 			return deleteResponse{resp, err.Error()}, nil
 		}
 		return deleteResponse{resp, ""}, nil
+	}
+}
+
+func makeDownloadEndpoint(svc FileSystemService) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(downloadRequest)
+		resp, err := svc.Download(req.DirPath, req.FileName)
+		if err != nil {
+			return downloadResponse{resp, err.Error()}, nil
+		}
+		return downloadResponse{resp, ""}, nil
+	}
+}
+
+func makeUploadEndpoint(svc FileSystemService) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(uploadRequest)
+		err := svc.Upload(req.DirPath, req.FileName, req.Contents)
+		if err != nil {
+			return uploadResponse{err.Error()}, nil
+		}
+		return uploadResponse{""}, nil
 	}
 }
 
@@ -204,4 +231,49 @@ type deleteResponse struct {
 
 func (r deleteResponse) error() error {
 	return errors.New(r.Error)
+}
+
+type downloadRequest struct {
+	// path to the directory
+	DirPath string `json:"dir_path"`
+	// name of file to be deleted
+	FileName string `json:"file_name,omitempty"`
+}
+
+type downloadResponse struct {
+	// path to the deleted file
+	Buffer io.ReadCloser `json:"buffer,omitempty"`
+	// message if something went wrong
+	Error string `json:"error,omitempty"`
+}
+
+func (r downloadResponse) error() error {
+	return errors.New(r.Error)
+}
+
+func (r downloadResponse) ReadCloser() io.ReadCloser {
+	return r.Buffer
+}
+
+type uploadRequest struct {
+	// path to the directory
+	DirPath string `json:"dir_path"`
+	// name of file to be deleted
+	FileName string `json:"file_name,omitempty"`
+	//
+	Contents io.ReadCloser `json:"contents"`
+}
+
+type uploadResponse struct {
+
+	// message if something went wrong
+	Error string `json:"error,omitempty"`
+}
+
+func (r uploadResponse) error() error {
+	return errors.New(r.Error)
+}
+
+func (r uploadRequest) ReadCloser() io.ReadCloser {
+	return r.Contents
 }

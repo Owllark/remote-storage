@@ -2,17 +2,20 @@ package file_system_svc
 
 import (
 	"errors"
+	"io"
 	"os"
 	fs "server/file_system_svc/repository/filesystem"
 )
 
 type FileSystemService interface {
-	GetState(string) (fs.FileInfo, error)
-	MkDir(string, string) (string, error)
-	Rename(string, string, string) (string, error)
-	Move(string, string, string) (string, error)
-	Delete(string, string) (string, error)
-	Copy(string, string, string) (string, error)
+	GetState(userRootDir string) (fs.FileInfo, error)
+	MkDir(path string, dir string) (string, error)
+	Rename(dirPath, oldName, newName string) (string, error)
+	Move(srcDirPath, fileName, destDirPath string) (string, error)
+	Delete(dirPath, fileName string) (string, error)
+	Copy(srcDirPath, fileName, destDirPath string) (string, error)
+	Download(dirPath, fileName string) (io.ReadCloser, error)
+	Upload(dirPath, fileName string, contents io.ReadCloser) error
 }
 
 var (
@@ -32,14 +35,7 @@ func NewFileSystemService() FileSystemService {
 func (svc *fileSystemService) GetState(userRootDir string) (fs.FileInfo, error) {
 	res, err := fs.TraverseDirectory(userRootDir)
 	if err != nil {
-		switch {
-		case os.IsNotExist(err):
-			err = ErrNotFound
-		case os.IsExist(err):
-			err = ErrAlreadyExists
-		default:
-			err = ErrUnknownError
-		}
+		err = getErrorType(err)
 	}
 	return res, err
 }
@@ -51,14 +47,7 @@ func (svc *fileSystemService) MkDir(path string, dir string) (string, error) {
 
 	err = fs.Mkdir(newDirPath, 0644)
 	if err != nil {
-		switch {
-		case os.IsNotExist(err):
-			err = ErrNotFound
-		case os.IsExist(err):
-			err = ErrAlreadyExists
-		default:
-			err = ErrUnknownError
-		}
+		err = getErrorType(err)
 	}
 
 	return newDirPath, err
@@ -71,14 +60,7 @@ func (svc *fileSystemService) Rename(dirPath, oldName, newName string) (string, 
 
 	err = fs.Rename(oldFilePath, newFilePath)
 	if err != nil {
-		switch {
-		case os.IsNotExist(err):
-			err = ErrNotFound
-		case os.IsExist(err):
-			err = ErrAlreadyExists
-		default:
-			err = ErrUnknownError
-		}
+		err = getErrorType(err)
 	}
 
 	return newFilePath, err
@@ -91,14 +73,7 @@ func (svc *fileSystemService) Move(srcDirPath, fileName, destDirPath string) (st
 
 	err = fs.Move(oldFilePath, newFilePath)
 	if err != nil {
-		switch {
-		case os.IsNotExist(err):
-			err = ErrNotFound
-		case os.IsExist(err):
-			err = ErrAlreadyExists
-		default:
-			err = ErrUnknownError
-		}
+		err = getErrorType(err)
 	}
 
 	return newFilePath, err
@@ -110,12 +85,7 @@ func (svc *fileSystemService) Delete(dirPath, fileName string) (string, error) {
 
 	err = fs.RemoveAll(filePath)
 	if err != nil {
-		switch {
-		case os.IsNotExist(err):
-			err = ErrNotFound
-		default:
-			err = ErrUnknownError
-		}
+		err = getErrorType(err)
 	}
 
 	return filePath, err
@@ -128,58 +98,70 @@ func (svc *fileSystemService) Copy(srcDirPath, fileName, destDirPath string) (st
 
 	err = fs.Copy(oldFilePath, newFilePath)
 	if err != nil {
-		switch {
-		case os.IsNotExist(err):
-			err = ErrNotFound
-		case os.IsExist(err):
-			err = ErrAlreadyExists
-		default:
-			err = ErrUnknownError
-		}
+		err = getErrorType(err)
 	}
 
 	return newFilePath, err
 }
 
-func (svc *fileSystemService) Download(srcDirPath, fileName, destDirPath string) (string, error) {
+func (svc *fileSystemService) Download(dirPath, fileName string) (io.ReadCloser, error) {
 	var err error
-	var oldFilePath = srcDirPath + fileName
-	var newFilePath = destDirPath + fileName
+	var filePath = dirPath + fileName
 
-	err = fs.Copy(oldFilePath, newFilePath)
+	file, err := fs.OpenFile(filePath)
 	if err != nil {
-		switch {
-		case os.IsNotExist(err):
-			err = ErrNotFound
-		case os.IsExist(err):
-			err = ErrAlreadyExists
-		default:
-			err = ErrUnknownError
-		}
+		err = getErrorType(err)
 	}
 
-	return newFilePath, err
+	return file, err
 }
 
-func (svc *fileSystemService) Upload(srcDirPath, fileName, destDirPath string) (string, error) {
+func (svc *fileSystemService) Upload(dirPath, fileName string, contents io.ReadCloser) error {
 	var err error
-	var oldFilePath = srcDirPath + fileName
-	var newFilePath = destDirPath + fileName
+	var filePath = dirPath + fileName
 
-	err = fs.Copy(oldFilePath, newFilePath)
+	file, err := fs.Create(filePath)
 	if err != nil {
-		switch {
-		case os.IsNotExist(err):
-			err = ErrNotFound
-		case os.IsExist(err):
-			err = ErrAlreadyExists
-		default:
-			err = ErrUnknownError
-		}
+		return getErrorType(err)
 	}
-
-	return newFilePath, err
+	_, err = io.Copy(file, contents)
+	if err != nil {
+		return getErrorType(err)
+	}
+	return nil
 }
+
+func getErrorType(err error) error {
+	switch {
+	case os.IsNotExist(err):
+		err = ErrNotFound
+	case os.IsExist(err):
+		err = ErrAlreadyExists
+	default:
+		err = ErrUnknownError
+	}
+	return err
+}
+
+//func (svc *fileSystemService) Upload(dirPath, fileName string, contents []byte) (string, error) {
+//	var err error
+//	var oldFilePath = srcDirPath + fileName
+//	var newFilePath = destDirPath + fileName
+//
+//	err = fs.Copy(oldFilePath, newFilePath)
+//	if err != nil {
+//		switch {
+//		case os.IsNotExist(err):
+//			err = ErrNotFound
+//		case os.IsExist(err):
+//			err = ErrAlreadyExists
+//		default:
+//			err = ErrUnknownError
+//		}
+//	}
+//
+//	return newFilePath, err
+//}
 
 //func (svc *fileSystemService) AssembleFiles(location, tempDirPath, fileName string) error {
 //	var err error

@@ -5,29 +5,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="454c6521-c7f9-4f7b-a23b-1cfabc86092f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../client/request_handlers.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../client/response_handlers.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/file_system/wrappers.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/storage/test_dir/file.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../client/go.mod" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../client/http_client/http_client.go" beforeDir="false" afterPath="$PROJECT_DIR$/../client/http_client/http_client.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../client/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/../client/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../schemas/request.go" beforeDir="false" afterPath="$PROJECT_DIR$/../schemas/request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../schemas/response.go" beforeDir="false" afterPath="$PROJECT_DIR$/../schemas/response.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/file_system/file_functions.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/file_system/helper.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/file_system/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/file_system/commands.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/go.mod" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/handlers.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/handlers.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/router/http_router.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/router/http_router.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test.http" beforeDir="false" afterPath="$PROJECT_DIR$/src/test.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/file.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test2.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/file_system_svc/endpoints.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_system_svc/endpoints.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/file_system_svc/log/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/file_system_svc/log/log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/file_system_svc/logging_middleware.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_system_svc/logging_middleware.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/file_system_svc/repository/filesystem/commands.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_system_svc/repository/filesystem/commands.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/file_system_svc/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_system_svc/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/file_system_svc/testsvc.http" beforeDir="false" afterPath="$PROJECT_DIR$/file_system_svc/testsvc.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/file_system_svc/transport.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_system_svc/transport.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTTP Request" />
+        <option value="Go File" />
+      </list>
+    </option>
   </component>
   <component name="GOROOT" url="file://$PROJECT_DIR$/../../../go1.20.2.windows-amd64/go" />
   <component name="Git.Settings">
@@ -43,6 +41,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultGoTemplateProperty": "Go File",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
@@ -51,14 +50,106 @@
     "WebServerToolWindowFactoryState": "false",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "D:/Go/remote-storage/server"
+    "last_opened_file_path": "D:/Go/remote-storage/server",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Go\remote-storage\server\common" />
+      <recent name="D:\Go\remote-storage\server\auth_svc" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Go\remote-storage\server\auth_svc" />
+      <recent name="D:\Go\remote-storage\server\file_system_service" />
+      <recent name="D:\Go\remote-storage\server\file_system_service\internal" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Go Build.go build server/file_system_svc/cmd/app">
+    <configuration name="go build server/auth_svc/cmd/app" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="server" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="server/auth_svc/cmd/app" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build server/file_system_svc/cmd/app" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="server" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="server/file_system_svc/cmd/app" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="All in testsvc" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" path="$PROJECT_DIR$/file_system_svc/testsvc.http">
+      <method v="2" />
+    </configuration>
+    <configuration name="test | #1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/auth_svc/test.http" requestIdentifier="#1" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="test | #2" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/auth_svc/test.http" index="2" requestIdentifier="#2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="testsvc | #1 (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/file_system_svc/testsvc.http" requestIdentifier="#1" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="testsvc | #2" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/file_system_svc/testsvc.http" index="2" requestIdentifier="#2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Go Build.go build server/file_system_svc/cmd/app" />
+      <item itemvalue="Go Build.go build server/auth_svc/cmd/app" />
+      <item itemvalue="HTTP Request.All in testsvc" />
+      <item itemvalue="HTTP Request.testsvc | #2" />
+      <item itemvalue="HTTP Request.test | #2" />
+      <item itemvalue="HTTP Request.testsvc | #1 (2)" />
+      <item itemvalue="HTTP Request.test | #1" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="HTTP Request.testsvc | #1 (2)" />
+        <item itemvalue="HTTP Request.testsvc | #2" />
+        <item itemvalue="HTTP Request.All in testsvc" />
+        <item itemvalue="HTTP Request.test | #1" />
+        <item itemvalue="HTTP Request.test | #2" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/file_system_svc/internal/service.go</url>
+          <line>91</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/file_system_svc/internal/service.go</url>
+          <line>26</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/file_system_svc/internal/service.go</url>
+          <line>108</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="GoApplicationRunConfiguration">
+        <watch expression="*(*&quot;string&quot;)(824634060432)" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

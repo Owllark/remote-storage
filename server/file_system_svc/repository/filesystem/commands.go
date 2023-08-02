@@ -34,6 +34,11 @@ func Create(filepath string) (*os.File, error) {
 	return file, err
 }
 
+func OpenFile(filepath string) (*os.File, error) {
+	file, err := os.OpenFile(getPath(filepath), os.O_RDWR, 0644)
+	return file, err
+}
+
 func Write(filepath string, data []byte) (int, error) {
 	file, err := os.OpenFile(getPath(filepath), os.O_RDWR, 0644)
 	defer file.Close()
@@ -42,6 +47,20 @@ func Write(filepath string, data []byte) (int, error) {
 	}
 	writtenBytesNum, err := file.Write(data)
 	return writtenBytesNum, err
+}
+
+func ReadAll(filepath string) ([]byte, error) {
+	var contents []byte
+	sourceFile, err := os.Open(getPath(filepath))
+	if err != nil {
+		return contents, err
+	}
+	defer sourceFile.Close()
+	contents, err = io.ReadAll(sourceFile)
+	if err != nil {
+		return contents, err
+	}
+	return contents, nil
 }
 
 func RemoveAll(filePath string) error {
