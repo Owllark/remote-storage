@@ -4,7 +4,6 @@ import (
 	_ "github.com/lib/pq"
 	"server/common"
 	"server/db/sql_db"
-	helper2 "server/utils"
 )
 
 // StorageDatabasePG provides higher level of database abstraction
@@ -37,7 +36,7 @@ func (s *StorageDatabasePG) GetHashedPassword(name string) (string, error) {
 	var res string
 	var hashedPassword []uint8
 	row := s.db.QueryRow(
-		"SELECT hashed_password FROM clients WHERE name=$1",
+		"SELECT hashed_password FROM users WHERE name=$1",
 		name,
 	)
 
@@ -79,7 +78,7 @@ func (s *StorageDatabasePG) GetUser(name string) (common.UserInf, error) {
 	var err error
 
 	row := s.db.QueryRow(
-		"SELECT name, root_directory FROM clients WHERE name=$1",
+		"SELECT name, root_directory FROM users WHERE name=$1",
 		name,
 	)
 	if err != nil {
@@ -99,9 +98,9 @@ func (s *StorageDatabasePG) GetUser(name string) (common.UserInf, error) {
 
 func (s *StorageDatabasePG) CreateUser(name, password, rootDir string) error {
 	_, err := s.db.Exec(
-		"INSERT INTO clients (name, hashed_password, root_directory) VALUES($1, $2, $3)",
+		"INSERT INTO users (name, hashed_password, root_directory) VALUES($1, $2, $3)",
 		name,
-		helper2.SHA256hashing(name+password),
+		common.SHA256hashing(name+password),
 		rootDir,
 	)
 	return err

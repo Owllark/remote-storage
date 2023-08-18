@@ -1,13 +1,10 @@
 package file_system_svc
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"github.com/go-kit/kit/endpoint"
-	"io"
 	"net/http"
+	"server/authsvc"
 	"server/common"
 )
 
@@ -17,9 +14,7 @@ func putUserInfInCtx(ctx context.Context, r common.UserInf) context.Context {
 	return context.WithValue(ctx, ctxUserInfKey{}, r)
 }
 
-const auth_svc_url = "http://localhost:666/authentication/validate"
-
-func AuthMiddleware(next endpoint.Endpoint) endpoint.Endpoint {
+func AuthMiddleware(authSvc authsvc.Service, next endpoint.Endpoint) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		// Extracting the request from the context
 		req := ctx.Value(ctxRequestKey{}).(*http.Request)
@@ -29,23 +24,12 @@ func AuthMiddleware(next endpoint.Endpoint) endpoint.Endpoint {
 			return nil, ErrAuthFailed
 		}
 
-		authRequestBody := common.ValidateTokenRequest{Token: tokenCookie.Value}
-		authRequestBodyJson, err := json.Marshal(authRequestBody)
+		userInf, err := authSvc.ValidateToken(ctx, tokenCookie.Value)
 		if err != nil {
-			return nil, ErrUnknownError
-		}
-		resp, err := http.Post(auth_svc_url, "application/json", bytes.NewReader(authRequestBodyJson))
-		body, _ := io.ReadAll(resp.Body)
-		var authResponse common.ValidateTokenResponse
-		err = json.Unmarshal(body, &authResponse)
-		if err != nil {
-			return nil, ErrUnknownError
-		}
-		if authResponse.Error != "" {
-			return nil, errors.New(authResponse.Error)
+			return nil, err
 		}
 
-		putUserInfInCtx(ctx, authResponse.Inf)
+		putUserInfInCtx(ctx, userInf)
 
 		// Call the next endpoint in the chain
 

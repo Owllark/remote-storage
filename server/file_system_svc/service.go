@@ -2,8 +2,11 @@ package file_system_svc
 
 import (
 	"errors"
+	"github.com/go-kit/kit/log"
 	"io"
 	"os"
+	"server/authsvc"
+	"server/authsvc/client"
 	fs "server/file_system_svc/repository/filesystem"
 )
 
@@ -16,6 +19,7 @@ type FileSystemService interface {
 	Copy(srcDirPath, fileName, destDirPath string) (string, error)
 	Download(dirPath, fileName string) (io.ReadCloser, error)
 	Upload(dirPath, fileName string, contents io.ReadCloser) error
+	getAuthSvc() authsvc.Service
 }
 
 var (
@@ -25,13 +29,32 @@ var (
 	ErrAuthFailed    = errors.New("authentication failed")
 )
 
+type Config struct {
+	RootDir             string
+	ConsulServerAddress string
+}
+
 type fileSystemService struct {
+	authSvc authsvc.Service
 }
 
-func NewFileSystemService() FileSystemService {
-	return &fileSystemService{}
+func NewFileSystemService(logger log.Logger, config Config) FileSystemService {
+	consulAddr := config.ConsulServerAddress
+	authSvc, err := client.New(consulAddr, logger)
+	if err != nil {
+		logger.Log("Error:", "cannot create authentication service client")
+	}
+	fs.InitializeFileSystem(fs.ConfigFileSystem{
+		RootDir: config.RootDir,
+	})
+	return &fileSystemService{
+		authSvc: authSvc,
+	}
 }
 
+func (svc *fileSystemService) getAuthSvc() authsvc.Service {
+	return svc.authSvc
+}
 func (svc *fileSystemService) GetState(userRootDir string) (fs.FileInfo, error) {
 	res, err := fs.TraverseDirectory(userRootDir)
 	if err != nil {
@@ -142,61 +165,3 @@ func getErrorType(err error) error {
 	}
 	return err
 }
-
-//func (svc *fileSystemService) Upload(dirPath, fileName string, contents []byte) (string, error) {
-//	var err error
-//	var oldFilePath = srcDirPath + fileName
-//	var newFilePath = destDirPath + fileName
-//
-//	err = fs.Copy(oldFilePath, newFilePath)
-//	if err != nil {
-//		switch {
-//		case os.IsNotExist(err):
-//			err = ErrNotFound
-//		case os.IsExist(err):
-//			err = ErrAlreadyExists
-//		default:
-//			err = ErrUnknownError
-//		}
-//	}
-//
-//	return newFilePath, err
-//}
-
-//func (svc *fileSystemService) AssembleFiles(location, tempDirPath, fileName string) error {
-//	var err error
-//	tempDirPath =fs.getPath(tempDirPath)
-//	files, err := os.ReadDir(tempDirPath)
-//	if err != nil {
-//		return err
-//	}
-//
-//	// Sort files by name in ascending order
-//	sort.Slice(files, func(i, j int) bool {
-//		fileNameI, _ := strconv.Atoi(files[i].Name())
-//		fileNameJ, _ := strconv.Atoi(files[j].Name())
-//		return fileNameI < fileNameJ
-//	})
-//
-//	// Create the output file
-//	outputFile, err := svc.Create(filepath.Join(location, fileName))
-//	if err != nil {
-//		return err
-//	}
-//
-//	// Iterate over the files and append their contents to the output file
-//	for _, file := range files {
-//		filePath := filepath.Join(tempDirPath, file.Name())
-//		fileContent, err := os.ReadFile(filePath)
-//		if err != nil {
-//			return err
-//		}
-//
-//		_, err = outputFile.Write(fileContent)
-//		if err != nil {
-//			return err
-//		}
-//	}
-//	defer outputFile.Close()
-//	return nil
-//}

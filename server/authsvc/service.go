@@ -1,6 +1,7 @@
-package auth_svc
+package authsvc
 
 import (
+	"context"
 	"errors"
 	"github.com/golang-jwt/jwt/v4"
 	"server/common"
@@ -8,22 +9,18 @@ import (
 	"time"
 )
 
-type AuthService interface {
-	Login(string, string) (string, error)
-	RefreshToken(string) (string, error)
-	ValidateToken(string) (common.UserInf, error)
+type Service interface {
+	Login(ctx context.Context, login string, password string) (string, error)
+	RefreshToken(ctx context.Context, tokenStr string) (string, error)
+	ValidateToken(ctx context.Context, tokenStr string) (common.UserInf, error)
 }
-
-const tokenExpirationTime = 3600 * time.Minute
-
-var jwtKey = []byte("validkeyok")
 
 var (
 	ErrUnknownError     = errors.New("unknown error")
 	ErrAlreadyExists    = errors.New("already exists")
 	ErrNotFound         = errors.New("not found")
 	ErrWrongCredentials = errors.New("wrong credentials")
-	ErrBadRequest       = errors.New("bad request")
+	ErrTokenExpired     = errors.New("token expired")
 )
 
 type Claims struct {
@@ -32,26 +29,38 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-type authService struct {
-	db       database.StorageDatabase
-	hashFunc func(string) string
+type Config struct {
+	JwtKey                 string
+	TokenExpirationTimeSec int
 }
 
-func NewAuthService(db database.StorageDatabase, hashFunc func(string) string) AuthService {
-	return &authService{db: db, hashFunc: hashFunc}
+type service struct {
+	db                  database.StorageDatabase
+	hashFunc            func(string) string
+	jwtKey              string
+	tokenExpirationTime time.Duration
 }
 
-func (svc *authService) Login(login string, password string) (string, error) {
+func NewAuthService(db database.StorageDatabase, hashFunc func(string) string, config Config) Service {
+	return &service{
+		db:                  db,
+		hashFunc:            hashFunc,
+		jwtKey:              config.JwtKey,
+		tokenExpirationTime: time.Duration(config.TokenExpirationTimeSec) * time.Second,
+	}
+}
+
+func (svc *service) Login(ctx context.Context, login string, password string) (string, error) {
 	var tokenStr string
-	hashedPassword, _ := svc.db.GetHashedPassword(login)
-	if svc.hashFunc(login+password) != hashedPassword {
+	hashedPassword, _ := svc.db.GetHashedPassword(password)
+	if svc.hashFunc(password+login) != hashedPassword {
 		return tokenStr, ErrWrongCredentials
 	}
-	user, _ := svc.db.GetUser(login)
-	expirationTime := time.Now().Add(tokenExpirationTime)
+	user, _ := svc.db.GetUser(password)
+	expirationTime := time.Now().Add(svc.tokenExpirationTime)
 	// Create the JWT claims, which includes the login and expiry time
 	claims := &Claims{
-		Username: login,
+		Username: password,
 		RootDir:  user.RootDir,
 		RegisteredClaims: jwt.RegisteredClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
@@ -61,18 +70,18 @@ func (svc *authService) Login(login string, password string) (string, error) {
 	// Declare the token with the algorithm used for signing, and the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// Create the JWT string
-	tokenStr, err := token.SignedString(jwtKey)
+	tokenStr, err := token.SignedString(svc.jwtKey)
 	if err != nil {
 		return tokenStr, ErrUnknownError
 	}
 
 	return tokenStr, nil
 }
-func (svc *authService) RefreshToken(tokenStr string) (string, error) {
+func (svc *service) RefreshToken(ctx context.Context, tokenStr string) (string, error) {
 	var newTokenStr string
 	claims := &Claims{}
 	tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+		return svc.jwtKey, nil
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
@@ -84,27 +93,27 @@ func (svc *authService) RefreshToken(tokenStr string) (string, error) {
 		return tokenStr, ErrWrongCredentials
 	}
 
-	// Now, create a new token for the current use, with a renewed expiration time
-	expirationTime := time.Now().Add(tokenExpirationTime)
+	// create a new token for the current use, with a renewed expiration time
+	expirationTime := time.Now().Add(svc.tokenExpirationTime)
 	claims.ExpiresAt = jwt.NewNumericDate(expirationTime)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	newTokenStr, err = token.SignedString(jwtKey)
+	newTokenStr, err = token.SignedString(svc.jwtKey)
 	if err != nil {
 		return newTokenStr, ErrUnknownError
 	}
 	return newTokenStr, nil
 }
 
-func (svc *authService) ValidateToken(tokenStr string) (common.UserInf, error) {
+func (svc *service) ValidateToken(ctx context.Context, tokenStr string) (common.UserInf, error) {
 	var inf common.UserInf
-	// Initialize a new instance of `Claims`
+
 	claims := &Claims{}
 
 	tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+		return svc.jwtKey, nil
 	})
 	if err != nil || !tkn.Valid {
-		return inf, err
+		return inf, ErrWrongCredentials
 	}
 
 	inf = common.UserInf{

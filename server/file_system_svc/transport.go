@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"server/authsvc"
 )
 
 const chunkSize = 64 * 1
@@ -31,13 +32,13 @@ type readCloserContainer interface {
 	ReadCloser() io.ReadCloser
 }
 
-func ApplyTransportMiddleware(endpoints *Endpoints, mw TransportMiddleware) Endpoints {
+func ApplyAuthMiddleware(endpoints *Endpoints, mw TransportAuthMiddleware, svc authsvc.Service) Endpoints {
 	v := reflect.ValueOf(endpoints).Elem()
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		if field.Type() == reflect.TypeOf((*endpoint.Endpoint)(nil)).Elem() {
 			endpointFunc := field.Interface().(endpoint.Endpoint)
-			field.Set(reflect.ValueOf(mw(endpointFunc)))
+			field.Set(reflect.ValueOf(mw(svc, endpointFunc)))
 		}
 	}
 	return *endpoints
@@ -49,15 +50,11 @@ func MakeHttpHandler(s FileSystemService) http.Handler {
 
 	r := mux.NewRouter()
 	e := MakeServerEndpoints(s)
-	e = ApplyTransportMiddleware(&e, AuthMiddleware)
+	e = ApplyAuthMiddleware(&e, AuthMiddleware, s.getAuthSvc())
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 		kithttp.ServerBefore(putRequestInCtx),
 	}
-
-	r.Methods("GET").Path("/filesystem/test").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(917)
-	})
 
 	r.Methods("GET").Path("/filesystem/state").Handler(kithttp.NewServer(
 		e.GetStateEndpoint,

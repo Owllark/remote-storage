@@ -8,10 +8,11 @@ import (
 )
 
 type ConfigFileSystem struct {
-	rootDir string
+	RootDir string
 }
 
 var rootDir string
+var isInitialized = false
 
 type FileInfo struct {
 	Name     string     `json:"name"`
@@ -25,21 +26,31 @@ func init() {
 
 }
 
+func checkForInitializing() {
+	if !isInitialized {
+		panic("package not initialized, root directory must be set")
+	}
+}
+
 func InitializeFileSystem(config ConfigFileSystem) {
-	rootDir = config.rootDir
+	rootDir = config.RootDir
+	isInitialized = true
 }
 
 func Create(filepath string) (*os.File, error) {
+	checkForInitializing()
 	file, err := os.Create(getPath(filepath))
 	return file, err
 }
 
 func OpenFile(filepath string) (*os.File, error) {
+	checkForInitializing()
 	file, err := os.OpenFile(getPath(filepath), os.O_RDWR, 0644)
 	return file, err
 }
 
 func Write(filepath string, data []byte) (int, error) {
+	checkForInitializing()
 	file, err := os.OpenFile(getPath(filepath), os.O_RDWR, 0644)
 	defer file.Close()
 	if err != nil {
@@ -50,6 +61,7 @@ func Write(filepath string, data []byte) (int, error) {
 }
 
 func ReadAll(filepath string) ([]byte, error) {
+	checkForInitializing()
 	var contents []byte
 	sourceFile, err := os.Open(getPath(filepath))
 	if err != nil {
@@ -64,31 +76,37 @@ func ReadAll(filepath string) ([]byte, error) {
 }
 
 func RemoveAll(filePath string) error {
+	checkForInitializing()
 	err := os.RemoveAll(getPath(filePath))
 	return err
 }
 
 func Remove(filePath string) error {
+	checkForInitializing()
 	err := os.Remove(getPath(filePath))
 	return err
 }
 
 func Rename(oldPath, newPath string) error {
+	checkForInitializing()
 	err := os.Rename(getPath(oldPath), getPath(newPath))
 	return err
 }
 
 func Move(srcPath, destPath string) error {
+	checkForInitializing()
 	err := os.Rename(getPath(srcPath), getPath(destPath))
 	return err
 }
 
 func Mkdir(path string, permission os.FileMode) error {
+	checkForInitializing()
 	err := os.Mkdir(getPath(path), permission)
 	return err
 }
 
 func Copy(srcPath, destPath string) error {
+	checkForInitializing()
 	srcPath = getPath(srcPath)
 	destPath = getPath(destPath)
 	srcInfo, err := os.Stat(srcPath)
@@ -155,6 +173,7 @@ func copyFile(src, dest string) error {
 }
 
 func TraverseDirectory(dirPath string) (FileInfo, error) {
+	checkForInitializing()
 	file := FileInfo{
 		Name:     filepath.Base(dirPath),
 		IsDir:    true,

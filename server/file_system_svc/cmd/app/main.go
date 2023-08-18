@@ -1,130 +1,42 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"net/http"
 	"os"
 	"server/file_system_svc"
-	"time"
+	"strconv"
 )
 
-//
-//import (
-//	"context"
-//	"encoding/json"
-//	"errors"
-//	"log"
-//	"net/http"
-//	"strings"
-//
-//	"github.com/go-kit/kit/endpoint"
-//	httptransport "github.com/go-kit/kit/transport/http"
-//)
-//
-//// StringService provides operations on strings.
-//type StringService interface {
-//	Uppercase(string) (string, error)
-//	Count(string) int
-//}
-//
-//// stringService is a concrete implementation of StringService
-//type stringService struct{}
-//
-//func (stringService) Uppercase(s string) (string, error) {
-//	if s == "" {
-//		return "", ErrEmpty
-//	}
-//	return strings.ToUpper(s), nil
-//}
-//
-//func (stringService) Count(s string) int {
-//	return len(s)
-//}
-//
-//// ErrEmpty is returned when an input string is empty.
-//var ErrEmpty = errors.New("empty string")
-//
-//// For each method, we define request and response structs
-//type uppercaseRequest struct {
-//	S string `json:"s"`
-//}
-//
-//type uppercaseResponse struct {
-//	V   string `json:"v"`
-//	Error string `json:"err,omitempty"` // errors don't define JSON marshaling
-//}
-//
-//type countRequest struct {
-//	S string `json:"s"`
-//}
-//
-//type countResponse struct {
-//	V int `json:"v"`
-//}
-//
-//// Endpoints are a primary abstraction in go-kit. An endpoint represents a single RPC (method in our service interface)
-//func makeUppercaseEndpoint(svc StringService) endpoint.Endpoint {
-//	return func(_ context.Context, request interface{}) (interface{}, error) {
-//		req := request.(uppercaseRequest)
-//		v, err := svc.Uppercase(req.S)
-//		if err != nil {
-//			return uppercaseResponse{v, err.Error()}, nil
-//		}
-//		return uppercaseResponse{v, ""}, nil
-//	}
-//}
-//
-//func makeCountEndpoint(svc StringService) endpoint.Endpoint {
-//	return func(_ context.Context, request interface{}) (interface{}, error) {
-//		req := request.(countRequest)
-//		v := svc.Count(req.S)
-//		return countResponse{v}, nil
-//	}
-//}
-//
-//// Transports expose the service to the network. In this first example we utilize JSON over HTTP.
-//func main() {
-//	svc := stringService{}
-//
-//	uppercaseHandler := httptransport.NewServer(
-//		makeUppercaseEndpoint(svc),
-//		decodeUppercaseRequest,
-//		encodeResponse,
-//	)
-//
-//	countHandler := httptransport.NewServer(
-//		makeCountEndpoint(svc),
-//		decodeCountRequest,
-//		encodeResponse,
-//	)
-//
-//	http.Handle("/uppercase", uppercaseHandler)
-//	http.Handle("/count", countHandler)
-//	log.Fatal(http.ListenAndServe(":777", nil))
-//}
-//
-//func decodeUppercaseRequest(_ context.Context, r *http.Request) (interface{}, error) {
-//	var request uppercaseRequest
-//	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-//		return nil, err
-//	}
-//	return request, nil
-//}
-//
-//func decodeCountRequest(_ context.Context, r *http.Request) (interface{}, error) {
-//	var request countRequest
-//	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-//		return nil, err
-//	}
-//	return request, nil
-//}
-//
-//func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-//	return json.NewEncoder(w).Encode(response)
-//}
+type Config struct {
+	Database struct {
+		Host     string `json:"host"`
+		Password string `json:"password"`
+		Name     string `json:"name"`
+		User     string `json:"user"`
+	} `json:"database"`
+	Host                string `json:"host"`
+	Port                int    `json:"port"`
+	ConsulServerAddress string `json:"consulServerAddress"`
+	RootDirectory       string `json:"rootDirectory"`
+}
+
+func LoadConfiguration(file string) Config {
+	var config Config
+	configFile, err := os.Open(file)
+	defer configFile.Close()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	jsonParser := json.NewDecoder(configFile)
+	jsonParser.Decode(&config)
+	return config
+}
 
 func main() {
+	config := LoadConfiguration("file_system_svc\\config\\config.json")
 	logFile, err := os.OpenFile("file_system_svc\\log\\log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Error opening log file:", err)
@@ -139,7 +51,10 @@ func main() {
 
 	var s file_system_svc.FileSystemService
 	{
-		s = file_system_svc.NewFileSystemService()
+		s = file_system_svc.NewFileSystemService(logger, file_system_svc.Config{
+			RootDir:             config.RootDirectory,
+			ConsulServerAddress: config.ConsulServerAddress,
+		})
 		s = file_system_svc.LoggingMiddleware(logger)(s)
 	}
 
@@ -147,7 +62,8 @@ func main() {
 	{
 		h = file_system_svc.MakeHttpHandler(s)
 	}
-
-	http.ListenAndServe("localhost:777", h)
-	logger.Log("ServiceSessionEnd", time.Now())
+	host := config.Host
+	port := config.Port
+	address := host + ":" + strconv.Itoa(port)
+	http.ListenAndServe(address, h)
 }

@@ -1,3 +1,3 @@
-CREATE DATABASE "lavka";
+CREATE DATABASE "remote_storage";
 
 

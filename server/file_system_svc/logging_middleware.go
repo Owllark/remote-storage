@@ -3,6 +3,7 @@ package file_system_svc
 import (
 	"github.com/go-kit/kit/log"
 	"io"
+	"server/authsvc"
 	fs "server/file_system_svc/repository/filesystem"
 	"time"
 )
@@ -19,6 +20,10 @@ func LoggingMiddleware(logger log.Logger) Middleware {
 type loggingMiddleware struct {
 	next   FileSystemService
 	logger log.Logger
+}
+
+func (mw loggingMiddleware) getAuthSvc() authsvc.Service {
+	return mw.next.getAuthSvc()
 }
 
 func (mw loggingMiddleware) GetState(userRootDir string) (info fs.FileInfo, err error) {

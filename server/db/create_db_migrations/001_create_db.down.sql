@@ -1,0 +1,1 @@
+DROP DATABASE "remote_storage";
