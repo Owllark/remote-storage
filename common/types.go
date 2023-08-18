@@ -8,5 +8,4 @@ type FileInfo struct {
 	Size     int64      `json:"size"`
 	Modified time.Time  `json:"modified"`
 	Children []FileInfo `json:"children,omitempty"` // Nested files and directories
-	// Add more fields as per your requirements
 }

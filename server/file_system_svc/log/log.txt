@@ -1,0 +1,58 @@
+ts=2023-07-26T20:31:02.6118698Z caller=logging_middleware.go:41 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-07-26T20:34:03.5206209Z caller=main.go:142 ServiceSessionStart=2023-07-26T23:34:03.5206209+03:00
+ts=2023-07-26T20:34:06.498167Z caller=logging_middleware.go:41 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=564µs err="not found"
+ts=2023-07-26T20:34:50.9082772Z caller=main.go:142 ServiceSessionStart=2023-07-26T23:34:50.9082772+03:00
+ts=2023-07-26T20:35:07.853258Z caller=main.go:142 ServiceSessionStart=2023-07-26T23:35:07.853258+03:00
+ts=2023-07-26T20:35:20.8274572Z caller=main.go:142 ServiceSessionStart=2023-07-26T23:35:20.8274572+03:00
+ts=2023-07-26T20:36:11.2507394Z caller=main.go:142 ServiceSessionStart=2023-07-26T23:36:11.2507394+03:00
+ts=2023-07-26T20:36:26.8991436Z caller=main.go:142 ServiceSessionStart=2023-07-26T23:36:26.8991436+03:00
+ts=2023-07-30T21:47:51.4154919Z caller=logging_middleware.go:27 method=Login login=goga password= took=329.858ms err="wrong credentials"
+ts=2023-07-30T21:47:59.3184578Z caller=logging_middleware.go:27 method=Login login=goga password= took=515.2µs err="wrong credentials"
+ts=2023-08-01T12:41:17.2725015Z caller=main.go:152 ServiceSessionEnd=2023-08-01T15:41:17.2725015+03:00
+ts=2023-08-01T12:41:32.353077Z caller=main.go:152 ServiceSessionEnd=2023-08-01T15:41:32.353077+03:00
+ts=2023-08-01T12:41:58.0391014Z caller=main.go:152 ServiceSessionEnd=2023-08-01T15:41:58.0391014+03:00
+ts=2023-08-01T18:48:12.730276Z caller=logging_middleware.go:27 method=Login login=goga password= took=120.8306ms err="wrong credentials"
+ts=2023-08-01T18:51:54.5820658Z caller=logging_middleware.go:27 method=Login login=goga password= took=37.6847ms err="wrong credentials"
+ts=2023-08-01T18:52:42.0618315Z caller=logging_middleware.go:27 method=Login login=goga password= took=40.8206ms err="wrong credentials"
+ts=2023-08-01T18:52:51.2784125Z caller=logging_middleware.go:27 method=Login login=goga password= took=567.5µs err="wrong credentials"
+ts=2023-08-01T18:56:51.626225Z caller=logging_middleware.go:27 method=Login login=test password= took=1.1741ms err="wrong credentials"
+ts=2023-08-01T18:58:08.7304634Z caller=logging_middleware.go:27 method=Login login=test password= took=34.5136544s err="wrong credentials"
+ts=2023-08-01T18:58:14.3315817Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=3.0219617s err="unknown error"
+ts=2023-08-01T18:58:19.8057689Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=1.145ms err="unknown error"
+ts=2023-08-01T19:00:39.1393625Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=2m11.645961s err="unknown error"
+ts=2023-08-01T19:02:41.5537598Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=1m34.800254s err="unknown error"
+ts=2023-08-01T19:03:53.0194267Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=6.8665525s err=null
+ts=2023-08-01T19:03:54.7877557Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=1.1128ms err=null
+ts=2023-08-01T19:04:43.0862556Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=13.1636813s err=null
+ts=2023-08-01T19:08:56.2517925Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=2.4121281s err=null
+ts=2023-08-01T19:36:57.6985445Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=1.3904ms err=null
+ts=2023-08-01T19:37:26.2578794Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=793.1µs err=null
+ts=2023-08-01T19:39:00.4411352Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=41.8228ms err=null
+ts=2023-08-01T19:40:57.2444475Z caller=logging_middleware.go:27 method=Login login= password= took=543.3µs err="wrong credentials"
+ts=2023-08-01T19:41:22.1691342Z caller=logging_middleware.go:34 method=ValidateToken token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJyb290X2RpciI6InRlc3QiLCJleHAiOjE2OTA5MTg4NjB9.Gi_7ZuvCMSQCSa7UpN9FymCJs4EmZsInlj7-Gb6uFJI 4.1263257s=err
+ts=2023-08-01T19:41:29.1890479Z caller=logging_middleware.go:34 method=ValidateToken token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJyb290X2RpciI6InRlc3QiLCJleHAiOjE2OTA5MTg4NjB9.Gi_7ZuvCMSQCSa7UpN9FymCJs4EmZsInlj7-Gb6uFJI 0s=err
+ts=2023-08-01T19:42:06.0876476Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=38.8219ms err=null
+ts=2023-08-01T20:34:34.9560935Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=39.4694ms err=null
+ts=2023-08-01T20:36:42.9670273Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=46.773ms err=null
+ts=2023-08-01T20:46:15.1578555Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=1.547ms err=null
+ts=2023-08-01T20:51:39.59678Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T20:52:40.2100213Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=11.3022941s err="not found"
+ts=2023-08-01T20:52:47.2102785Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=2.8512835s err="not found"
+ts=2023-08-01T20:52:49.4560107Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T20:53:00.4598016Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=server.go newName=not_server.go took=1.1115ms err=null
+ts=2023-08-01T20:53:16.5428945Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=server.go newName=not_server.go took=0s err="not found"
+ts=2023-08-01T20:53:26.1417158Z caller=logging_middleware.go:39 method=GetState dirPath=api/ oldName=not_server.go newName=server.go took=0s err=null
+ts=2023-08-01T23:07:42.4610265Z caller=logging_middleware.go:27 method=Login login=test password=qwerty took=39.2538ms err=null
+ts=2023-08-01T23:20:45.5063775Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:21:15.1605203Z caller=logging_middleware.go:40 method=Rename dirPath= oldName= newName= took=0s err="not found"
+ts=2023-08-01T23:21:23.6596917Z caller=logging_middleware.go:40 method=Rename dirPath= oldName= newName= took=0s err="not found"
+ts=2023-08-01T23:21:26.5082583Z caller=logging_middleware.go:40 method=Rename dirPath= oldName= newName= took=505.6µs err="not found"
+ts=2023-08-01T23:25:04.318234Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:25:09.6883061Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:27:17.7193895Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:27:20.749711Z caller=logging_middleware.go:40 method=Rename dirPath=api/ oldName=not_server.go newName=server.go took=0s err="not found"
+ts=2023-08-01T23:31:38.6725407Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=7.8380877s err=null
+ts=2023-08-01T23:33:10.6650657Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=2.4954399s err=null
+ts=2023-08-01T23:34:13.2285422Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=0s err=null
+ts=2023-08-01T23:36:01.0136284Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=0s err=null
+ts=2023-08-01T23:37:25.2541663Z caller=logging_middleware.go:68 method=Download dirPath=api/ fileName=server.go took=567.7µs err=null

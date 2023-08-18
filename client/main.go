@@ -22,7 +22,7 @@ const (
 )
 
 type State struct {
-	fs *file_system.FileSystem
+	fs *file_system.FileSystemBrowser
 }
 
 var state State
@@ -85,7 +85,7 @@ func main() {
 
 	}
 
-	state.fs = file_system.NewFileSystem(common.FileInfo{})
+	state.fs = file_system.NewFileSystemBrowser(common.FileInfo{})
 	UpdateFileSystemState(client)
 
 	for !isOver {
@@ -278,7 +278,7 @@ func main() {
 				if len(arguments) == 2 {
 					location = state.fs.GetCurrentPath()
 				} else {
-					location = arguments[2]
+					location = getLocation(arguments[2])
 				}
 
 				err = UploadFile(client, path, filename, location)
@@ -299,7 +299,7 @@ func main() {
 				}
 				var downloadLocation string
 				if len(arguments) == 2 {
-					downloadLocation = state.fs.GetCurrentPath()
+					downloadLocation = ""
 				} else {
 					downloadLocation = arguments[2]
 				}

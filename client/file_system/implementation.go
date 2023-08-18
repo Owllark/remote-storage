@@ -10,15 +10,17 @@ import (
 
 const pathSeparator = string(os.PathSeparator)
 
-type FileSystem struct {
+type FileAction func(info *common.FileInfo) error
+
+type FileSystemBrowser struct {
 	currentPath    string
 	currentNesting []string
 	prevPaths      []string
 	root           common.FileInfo
 }
 
-func NewFileSystem(root common.FileInfo) *FileSystem {
-	var res FileSystem
+func NewFileSystemBrowser(root common.FileInfo) *FileSystemBrowser {
+	var res FileSystemBrowser
 	res.root = root
 	res.currentPath = ""
 	res.currentNesting = res.currentNesting[:0]
@@ -27,14 +29,14 @@ func NewFileSystem(root common.FileInfo) *FileSystem {
 
 }
 
-func (fs *FileSystem) Reset(root common.FileInfo) {
+func (fs *FileSystemBrowser) Reset(root common.FileInfo) {
 	fs.root = root
 	fs.currentPath = ""
 	fs.currentNesting = fs.currentNesting[:0]
 	fs.prevPaths = fs.prevPaths[:0]
 }
 
-func (fs *FileSystem) Cd(path string) error {
+func (fs *FileSystemBrowser) Cd(path string) error {
 	var err error
 	switch path {
 	case "..":
@@ -81,13 +83,13 @@ func (fs *FileSystem) Cd(path string) error {
 	return err
 }
 
-func (fs *FileSystem) Ls(dirPath string) ([]string, error) {
+func (fs *FileSystemBrowser) Ls(dirPath string) ([]string, error) {
 	var res []string
 	var dir *common.FileInfo
 	if (fs.currentPath + dirPath) == pathSeparator {
 		dir = &fs.root
 	} else {
-		dir = fs.findFileByPath(splitPath(fs.currentPath + dirPath))
+		dir = fs.FindFileByPath(splitPath(fs.currentPath + dirPath))
 	}
 	if dir == nil {
 		err := errors.New(fmt.Sprintf("%s not found", dirPath))
@@ -126,7 +128,7 @@ func splitPath(path string) []string {
 	return res
 }
 
-func (fs *FileSystem) isDirectoryExists(path []string) bool {
+func (fs *FileSystemBrowser) isDirectoryExists(path []string) bool {
 	curDir := &fs.root
 	for _, dir := range path {
 		fileFound := findFileInDirectory(curDir, dir)
@@ -138,7 +140,7 @@ func (fs *FileSystem) isDirectoryExists(path []string) bool {
 	return curDir.IsDir
 }
 
-func (fs *FileSystem) findFileByPath(path []string) *common.FileInfo {
+func (fs *FileSystemBrowser) FindFileByPath(path []string) *common.FileInfo {
 	curFile := &fs.root
 	for _, dir := range path {
 		fileFound := findFileInDirectory(curFile, dir)
@@ -150,11 +152,11 @@ func (fs *FileSystem) findFileByPath(path []string) *common.FileInfo {
 	return curFile
 }
 
-func (fs *FileSystem) SetFiles(files common.FileInfo) {
+func (fs *FileSystemBrowser) SetFiles(files common.FileInfo) {
 	fs.root = files
 }
 
-func (fs *FileSystem) GetCurrentPath() string {
+func (fs *FileSystemBrowser) GetCurrentPath() string {
 	return fs.currentPath
 }
 
@@ -188,6 +190,31 @@ func findFileByName(fileInfo common.FileInfo, targetName string) *common.FileInf
 		} else if child.Name == targetName {
 			// If the child is a file and its name matches the target name, return it
 			return &child
+		}
+	}
+
+	// File not found
+	return nil
+}
+
+func (fs *FileSystemBrowser) ForEveryFile(path string, action FileAction) error {
+	pathList := splitPath(path)
+	firstFile := fs.FindFileByPath(pathList)
+	err := action(firstFile)
+	if err != nil {
+		return err
+	}
+
+	for _, child := range firstFile.Children {
+		err := action(&child)
+		if err != nil {
+			return err
+		}
+		if child.IsDir {
+			err := fs.ForEveryFile(joinPath(pathList[1:]), action)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
