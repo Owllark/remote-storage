@@ -1,6 +1,7 @@
-package file_system_svc
+package storagesvc
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/go-kit/kit/endpoint"
@@ -9,7 +10,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
-	"server/authsvc"
+	"remote-storage/server/authsvc"
 )
 
 const chunkSize = 64 * 1
@@ -45,8 +46,8 @@ func ApplyAuthMiddleware(endpoints *Endpoints, mw TransportAuthMiddleware, svc a
 }
 
 // MakeHttpHandler mounts all service endpoints into a http.Handler.
-// Useful in a profilesvc server.
-func MakeHttpHandler(s FileSystemService) http.Handler {
+// Useful in a storagesvc server.
+func MakeHttpHandler(s Service) http.Handler {
 
 	r := mux.NewRouter()
 	e := MakeServerEndpoints(s)
@@ -224,6 +225,119 @@ func encodeChunkedResponse(ctx context.Context, w http.ResponseWriter, response 
 		}
 	}
 	return nil
+}
+
+// encodeRequest likewise JSON-encodes the request to the HTTP request body.
+// Don't use it directly as a transport/http.Client EncodeRequestFunc:
+// storagesvc endpoints require mutating the HTTP method and request path.
+func encodeRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(reqBody)
+	if err != nil {
+		return err
+	}
+	req.Body = io.NopCloser(&buf)
+	cookies := ctx.Value(contextKeyRequestCookie).(Cookies)
+	for _, cookie := range cookies {
+		req.AddCookie(cookie)
+	}
+	return nil
+}
+
+func encodeGetStateRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	// r.Methods("GET").Path("/filesystem/state")
+	req.URL.Path = "/filesystem/state"
+	return encodeRequest(ctx, req, reqBody)
+}
+
+func decodeGetStateResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response getStateResponse
+	err := json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
+}
+
+func encodeMkDirRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	// r.Methods("POST").Path("/filesystem/mkdir")
+	req.URL.Path = "/filesystem/mkdir"
+	return encodeRequest(ctx, req, reqBody)
+}
+
+func decodeMkDirResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response mkDirResponse
+	err := json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
+}
+
+func encodeRenameRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	// r.Methods("POST").Path("/filesystem/rename")
+	req.URL.Path = "/filesystem/rename"
+	return encodeRequest(ctx, req, reqBody)
+}
+
+func decodeRenameResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response renameResponse
+	err := json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
+}
+
+func encodeMoveRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	// r.Methods("POST").Path("/filesystem/move")
+	req.URL.Path = "/filesystem/move"
+	return encodeRequest(ctx, req, reqBody)
+}
+
+func decodeMoveResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response moveResponse
+	err := json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
+}
+
+func encodeCopyRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	// r.Methods("POST").Path("/filesystem/copy")
+	req.URL.Path = "/filesystem/copy"
+	return encodeRequest(ctx, req, reqBody)
+}
+
+func decodeCopyResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response moveResponse
+	err := json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
+}
+
+func encodeDeleteRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	// r.Methods("POST").Path("/filesystem/delete")
+	req.URL.Path = "/filesystem/delete"
+	return encodeRequest(ctx, req, reqBody)
+}
+
+func decodeDeleteResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response moveResponse
+	err := json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
+}
+
+func encodeDownloadRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	// r.Methods("POST").Path("/filesystem/download")
+	req.URL.Path = "/filesystem/download"
+	return encodeRequest(ctx, req, reqBody)
+}
+
+func decodeDownloadResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response moveResponse
+	err := json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
+}
+
+func encodeUploadRequest(ctx context.Context, req *http.Request, reqBody interface{}) error {
+	// r.Methods("POST").Path("/filesystem/upload")
+	req.URL.Path = "/filesystem/upload"
+	return encodeRequest(ctx, req, reqBody)
+}
+
+func decodeUdploadResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response moveResponse
+	err := json.NewDecoder(resp.Body).Decode(&response)
+	return response, err
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {

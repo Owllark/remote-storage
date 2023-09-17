@@ -1,4 +1,4 @@
-// Package client provides a profilesvc client based on a predefined Consul
+// Package client provides an authsvc client based on a predefined Consul
 // service name and relevant tags. Users must only provide the address of a
 // Consul server.
 package client
@@ -14,11 +14,11 @@ import (
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/consul"
 	"github.com/go-kit/kit/sd/lb"
-	"server/authsvc"
+	"remote-storage/server/authsvc"
 )
 
-// New returns a service that's load-balanced over instances of profilesvc found
-// in the provided Consul server. The mechanism of looking up profilesvc
+// New returns a service that's load-balanced over instances of authsvc found
+// in the provided Consul server. The mechanism of looking up authsvc
 // instances in Consul is hard-coded into the client.
 func New(consulAddr string, logger log.Logger) (authsvc.Service, error) {
 	apiclient, err := consulapi.NewClient(&consulapi.Config{

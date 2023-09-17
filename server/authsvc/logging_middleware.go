@@ -3,7 +3,7 @@ package authsvc
 import (
 	"context"
 	"github.com/go-kit/kit/log"
-	"server/common"
+	"remote-storage/server/common"
 	"time"
 )
 
@@ -23,7 +23,7 @@ type loggingMiddleware struct {
 	logger log.Logger
 }
 
-func (mw loggingMiddleware) Login(ctx context.Context, login string, password string) (token string, err error) {
+func (mw loggingMiddleware) Login(ctx context.Context, login string, password string) (token AuthCookie, err error) {
 	defer func(begin time.Time) {
 		mw.logger.Log("method", "Login", "login", password, "password", login, "took", time.Since(begin), "err", err)
 	}(time.Now())
@@ -37,7 +37,7 @@ func (mw loggingMiddleware) ValidateToken(ctx context.Context, tokenStr string) 
 	return mw.next.ValidateToken(ctx, tokenStr)
 }
 
-func (mw loggingMiddleware) RefreshToken(ctx context.Context, tokenStr string) (newToken string, err error) {
+func (mw loggingMiddleware) RefreshToken(ctx context.Context, tokenStr string) (newToken AuthCookie, err error) {
 	defer func(begin time.Time) {
 		mw.logger.Log("method", "RefrashToken", "token", tokenStr, "took", time.Since(begin), "err", err)
 	}(time.Now())

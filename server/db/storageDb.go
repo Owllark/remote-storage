@@ -1,6 +1,6 @@
 package db
 
-import "server/common"
+import "remote-storage/server/common"
 
 type StorageDatabase interface {
 	Connect(user, password, dbname, host string) error

@@ -1,11 +1,11 @@
-package file_system_svc
+package storagesvc
 
 import (
 	"context"
 	"github.com/go-kit/kit/endpoint"
 	"net/http"
-	"server/authsvc"
-	"server/common"
+	"remote-storage/server/authsvc"
+	"remote-storage/server/common"
 )
 
 type ctxUserInfKey struct{}

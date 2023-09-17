@@ -6,7 +6,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"net/http"
 	"os"
-	"server/file_system_svc"
+	"remote-storage/server/storagesvc"
 	"strconv"
 )
 
@@ -36,8 +36,8 @@ func LoadConfiguration(file string) Config {
 }
 
 func main() {
-	config := LoadConfiguration("file_system_svc\\config\\config.json")
-	logFile, err := os.OpenFile("file_system_svc\\log\\log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	config := LoadConfiguration("storagesvc\\config\\config.json")
+	logFile, err := os.OpenFile("storagesvc\\log\\log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Error opening log file:", err)
 	}
@@ -49,18 +49,18 @@ func main() {
 		logger = log.With(logger, "caller", log.DefaultCaller)
 	}
 
-	var s file_system_svc.FileSystemService
+	var s storagesvc.Service
 	{
-		s = file_system_svc.NewFileSystemService(logger, file_system_svc.Config{
+		s = storagesvc.NewFileSystemService(logger, storagesvc.Config{
 			RootDir:             config.RootDirectory,
 			ConsulServerAddress: config.ConsulServerAddress,
 		})
-		s = file_system_svc.LoggingMiddleware(logger)(s)
+		s = storagesvc.LoggingMiddleware(logger)(s)
 	}
 
 	var h http.Handler
 	{
-		h = file_system_svc.MakeHttpHandler(s)
+		h = storagesvc.MakeHttpHandler(s)
 	}
 	host := config.Host
 	port := config.Port

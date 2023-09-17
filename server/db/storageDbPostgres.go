@@ -2,8 +2,8 @@ package db
 
 import (
 	_ "github.com/lib/pq"
-	"server/common"
-	"server/db/sql_db"
+	"remote-storage/server/common"
+	"remote-storage/server/db/sql_db"
 )
 
 // StorageDatabasePG provides higher level of database abstraction

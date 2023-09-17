@@ -1,10 +1,10 @@
-package file_system_svc
+package storagesvc
 
 import (
 	"github.com/go-kit/kit/endpoint"
-	"server/authsvc"
+	"remote-storage/server/authsvc"
 )
 
-type Middleware func(FileSystemService) FileSystemService
+type Middleware func(Service) Service
 type TransportMiddleware func(endpoint.Endpoint) endpoint.Endpoint
 type TransportAuthMiddleware func(authsvc.Service, endpoint.Endpoint) endpoint.Endpoint
