@@ -29,7 +29,7 @@ func MakeHttpHandler(s Service) http.Handler {
 	}
 
 	r.Methods("GET").Path("/authentication/test").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(917)
+		w.WriteHeader(451)
 	})
 
 	r.Methods("POST").Path("/authentication/login").Handler(httptransport.NewServer(

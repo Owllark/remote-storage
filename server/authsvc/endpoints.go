@@ -6,8 +6,9 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/url"
-	"server/common"
+	"remote-storage/server/common"
 	"strings"
+	"time"
 )
 
 type Endpoints struct {
@@ -49,30 +50,30 @@ func MakeClientEndpoints(instance string) (Endpoints, error) {
 }
 
 // Login implements Service. Primarily useful in a client.
-func (e Endpoints) Login(ctx context.Context, login string, hashedPassword string) (string, error) {
+func (e Endpoints) Login(ctx context.Context, login string, password string) (AuthCookie, error) {
 	request := loginRequest{
 		Login:          login,
-		HashedPassword: hashedPassword,
+		HashedPassword: password,
 	}
 	response, err := e.LoginEndpoint(ctx, request)
 	if err != nil {
-		return "", err
+		return AuthCookie{}, err
 	}
 	resp := response.(loginResponse)
-	return resp.Token, errors.New(resp.Error)
+	return resp.AuthCookie, errors.New(resp.Error)
 }
 
 // RefreshToken implements Service. Primarily useful in a client.
-func (e Endpoints) RefreshToken(ctx context.Context, tokenStr string) (string, error) {
+func (e Endpoints) RefreshToken(ctx context.Context, tokenStr string) (AuthCookie, error) {
 	request := refreshTokenRequest{
 		Token: tokenStr,
 	}
 	response, err := e.RefreshTokenEndpoint(ctx, request)
 	if err != nil {
-		return "", err
+		return AuthCookie{}, err
 	}
 	resp := response.(refreshTokenResponse)
-	return resp.Token, errors.New(resp.Error)
+	return resp.AuthCookie, errors.New(resp.Error)
 }
 
 // ValidateToken implements Service. Primarily useful in a client.
@@ -122,14 +123,20 @@ func MakeValidateTokenEndpoint(svc Service) endpoint.Endpoint {
 	}
 }
 
+type AuthCookie struct {
+	Name    string    `json:"name,omitempty"`
+	Value   string    `json:"value,omitempty"`
+	Expires time.Time `json:"expires"`
+}
+
 type loginRequest struct {
 	Login          string `json:"login,omitempty"`
 	HashedPassword string `json:"hashed_password,omitempty"`
 }
 
 type loginResponse struct {
-	Token string `json:"token,omitempty"`
-	Error string `json:"error,omitempty"`
+	AuthCookie AuthCookie `json:"auth_cookie,omitempty"`
+	Error      string     `json:"error,omitempty"`
 }
 
 func (r loginResponse) error() error {
@@ -141,8 +148,8 @@ type refreshTokenRequest struct {
 }
 
 type refreshTokenResponse struct {
-	Token string `json:"token,omitempty"`
-	Error string `json:"error,omitempty"`
+	AuthCookie AuthCookie `json:"auth_cookie,omitempty"`
+	Error      string     `json:"error,omitempty"`
 }
 
 func (r refreshTokenResponse) error() error {

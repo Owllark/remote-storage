@@ -7,9 +7,9 @@ import (
 	apiconsul "github.com/hashicorp/consul/api"
 	"net/http"
 	"os"
-	"server/authsvc"
-	"server/common"
-	"server/db"
+	"remote-storage/server/authsvc"
+	"remote-storage/server/common"
+	"remote-storage/server/db"
 	"strconv"
 	"time"
 )
@@ -28,6 +28,7 @@ type Config struct {
 	JwtKey                 string `json:"jwtKey"`
 	TokenExpirationTimeSec int    `json:"tokenExpirationTimeSec"`
 	ConsulServerAddress    string `json:"consulServerAddress"`
+	AuthTokenName          string `json:"authTokenName"`
 }
 
 func LoadConfiguration(file string) Config {
@@ -68,9 +69,9 @@ func registerInConsul(serviceID, serviceName, address string, port int, tags []s
 }
 
 func main() {
-	config := LoadConfiguration("authsvc\\config\\config.json")
+	config := LoadConfiguration("server\\authsvc\\config\\config.json")
 
-	logFile, err := os.OpenFile("authsvc\\log\\log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("server\\authsvc\\log\\log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Error opening log file:", err)
 	}
@@ -92,6 +93,7 @@ func main() {
 		s = authsvc.NewAuthService(&database, common.SHA256hashing, authsvc.Config{
 			JwtKey:                 config.JwtKey,
 			TokenExpirationTimeSec: config.TokenExpirationTimeSec,
+			AuthTokenName:          config.AuthTokenName,
 		})
 		s = authsvc.LoggingMiddleware(logger)(s)
 	}

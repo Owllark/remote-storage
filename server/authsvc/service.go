@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"github.com/golang-jwt/jwt/v4"
-	"server/common"
-	database "server/db"
+	"remote-storage/server/common"
+	database "remote-storage/server/db"
 	"time"
 )
 
 type Service interface {
-	Login(ctx context.Context, login string, password string) (string, error)
-	RefreshToken(ctx context.Context, tokenStr string) (string, error)
+	Login(ctx context.Context, login string, password string) (AuthCookie, error)
+	RefreshToken(ctx context.Context, tokenStr string) (AuthCookie, error)
 	ValidateToken(ctx context.Context, tokenStr string) (common.UserInf, error)
 }
 
@@ -32,6 +32,7 @@ type Claims struct {
 type Config struct {
 	JwtKey                 string
 	TokenExpirationTimeSec int
+	AuthTokenName          string
 }
 
 type service struct {
@@ -39,6 +40,7 @@ type service struct {
 	hashFunc            func(string) string
 	jwtKey              string
 	tokenExpirationTime time.Duration
+	authTokenName       string
 }
 
 func NewAuthService(db database.StorageDatabase, hashFunc func(string) string, config Config) Service {
@@ -47,14 +49,15 @@ func NewAuthService(db database.StorageDatabase, hashFunc func(string) string, c
 		hashFunc:            hashFunc,
 		jwtKey:              config.JwtKey,
 		tokenExpirationTime: time.Duration(config.TokenExpirationTimeSec) * time.Second,
+		authTokenName:       config.AuthTokenName,
 	}
 }
 
-func (svc *service) Login(ctx context.Context, login string, password string) (string, error) {
+func (svc *service) Login(ctx context.Context, login string, password string) (AuthCookie, error) {
 	var tokenStr string
-	hashedPassword, _ := svc.db.GetHashedPassword(password)
+	hashedPassword, _ := svc.db.GetHashedPassword(login)
 	if svc.hashFunc(password+login) != hashedPassword {
-		return tokenStr, ErrWrongCredentials
+		return AuthCookie{}, ErrWrongCredentials
 	}
 	user, _ := svc.db.GetUser(password)
 	expirationTime := time.Now().Add(svc.tokenExpirationTime)
@@ -72,12 +75,16 @@ func (svc *service) Login(ctx context.Context, login string, password string) (s
 	// Create the JWT string
 	tokenStr, err := token.SignedString(svc.jwtKey)
 	if err != nil {
-		return tokenStr, ErrUnknownError
+		return AuthCookie{}, ErrUnknownError
 	}
 
-	return tokenStr, nil
+	return AuthCookie{
+		Name:    svc.authTokenName,
+		Value:   tokenStr,
+		Expires: expirationTime,
+	}, nil
 }
-func (svc *service) RefreshToken(ctx context.Context, tokenStr string) (string, error) {
+func (svc *service) RefreshToken(ctx context.Context, tokenStr string) (AuthCookie, error) {
 	var newTokenStr string
 	claims := &Claims{}
 	tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
@@ -85,12 +92,12 @@ func (svc *service) RefreshToken(ctx context.Context, tokenStr string) (string, 
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
-			return tokenStr, ErrWrongCredentials
+			return AuthCookie{}, ErrWrongCredentials
 		}
-		return tokenStr, ErrWrongCredentials
+		return AuthCookie{}, ErrWrongCredentials
 	}
 	if !tkn.Valid {
-		return tokenStr, ErrWrongCredentials
+		return AuthCookie{}, ErrWrongCredentials
 	}
 
 	// create a new token for the current use, with a renewed expiration time
@@ -99,9 +106,13 @@ func (svc *service) RefreshToken(ctx context.Context, tokenStr string) (string, 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	newTokenStr, err = token.SignedString(svc.jwtKey)
 	if err != nil {
-		return newTokenStr, ErrUnknownError
+		return AuthCookie{}, ErrUnknownError
 	}
-	return newTokenStr, nil
+	return AuthCookie{
+		Name:    svc.authTokenName,
+		Value:   newTokenStr,
+		Expires: expirationTime,
+	}, nil
 }
 
 func (svc *service) ValidateToken(ctx context.Context, tokenStr string) (common.UserInf, error) {

@@ -1,2 +1,5 @@
 .idea/
-server/storage/
+**/log/
+**/config/
+log.txt
+config.json
